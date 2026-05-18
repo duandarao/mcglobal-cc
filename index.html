@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>McGlobal — Physical AI R&D as a Service</title>
+  <meta name="description" content="Your outsourced Physical AI R&D department in Shenzhen. From concept to prototype in 60 days. No hardware team needed." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    /* ─── Reset & Base ──────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:   #0A0A0A;
+      --bg-secondary: #111111;
+      --bg-card:      #141414;
+      --bg-card-2:    #1A1A1A;
+      --accent-blue:  #00D4FF;
+      --accent-purple:#7B61FF;
+      --accent-glow:  rgba(0,212,255,0.15);
+      --text-primary: #FFFFFF;
+      --text-secondary:#A0A0A0;
+      --text-muted:   #555555;
+      --border:       rgba(255,255,255,0.06);
+      --border-glow:  rgba(0,212,255,0.25);
+      --font-head:    'Space Grotesk', sans-serif;
+      --font-body:    'Inter', sans-serif;
+      --radius-card:  16px;
+      --radius-btn:   8px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.65;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ─── Typography ─────────────────────────────── */
+    h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+    h1 { font-size: clamp(48px, 6vw, 80px); }
+    h2 { font-size: clamp(32px, 4vw, 52px); }
+    h3 { font-size: clamp(20px, 2.5vw, 28px); }
+    p  { color: var(--text-secondary); }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── Layout helpers ────────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+    .section    { padding: 140px 0; }
+    .section-sm { padding: 80px 0; }
+
+    .tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 100px;
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.2);
+      font-size: 12px; font-weight: 600;
+      color: var(--accent-blue); letter-spacing: 0.08em; text-transform: uppercase;
+      font-family: var(--font-head);
+      margin-bottom: 20px;
+    }
+
+    .section-title { margin-bottom: 16px; }
+    .section-sub { font-size: 18px; color: var(--text-secondary); max-width: 560px; margin-bottom: 60px; }
+
+    /* ─── Buttons ────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: var(--radius-btn);
+      font-family: var(--font-head); font-weight: 600; font-size: 15px;
+      cursor: pointer; border: none; transition: all 0.25s ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #000;
+      box-shadow: 0 0 24px rgba(0,212,255,0.3);
+    }
+    .btn-primary:hover {
+      background: #22DFFF;
+      box-shadow: 0 0 40px rgba(0,212,255,0.5);
+      transform: translateY(-2px);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      transform: translateY(-2px);
+    }
+    .btn-purple {
+      background: var(--accent-purple);
+      color: #fff;
+      box-shadow: 0 0 24px rgba(123,97,255,0.3);
+    }
+    .btn-purple:hover {
+      box-shadow: 0 0 40px rgba(123,97,255,0.5);
+      transform: translateY(-2px);
+    }
+
+    /* ─── Navbar ────────────────────────────────── */
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      padding: 0 40px; height: 72px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(10,10,10,0.7);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.3s ease;
+    }
+    .nav-logo {
+      font-family: var(--font-head);
+      font-weight: 700; font-size: 22px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-logo-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 12px var(--accent-blue);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { box-shadow: 0 0 8px var(--accent-blue); }
+      50%      { box-shadow: 0 0 20px var(--accent-blue); }
+    }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a {
+      font-family: var(--font-head); font-size: 14px; font-weight: 500;
+      color: var(--text-secondary); transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-cta { display: flex; align-items: center; gap: 12px; }
+
+    /* Mobile menu toggle */
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+    .hamburger span { width: 22px; height: 2px; background: var(--text-primary); border-radius: 2px; transition: all 0.3s; }
+
+    /* ─── Hero ──────────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      position: relative;
+      display: flex; align-items: center;
+      overflow: hidden;
+    }
+    #hero-canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      max-width: 680px;
+      padding: 140px 40px 80px;
+      margin-left: max(40px, calc(50vw - 580px));
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 100px;
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.2);
+      font-size: 13px; font-weight: 600; font-family: var(--font-head);
+      color: var(--accent-blue); letter-spacing: 0.06em;
+      margin-bottom: 28px;
+      animation: fadeUp 0.8s ease both;
+    }
+    .hero-eyebrow::before { content: '●'; font-size: 8px; animation: pulse-dot 2s infinite; }
+
+    .hero-title {
+      font-size: clamp(48px, 6vw, 76px);
+      font-weight: 700; letter-spacing: -0.03em; line-height: 1.05;
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+    .hero-title .highlight {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-subtitle {
+      font-size: 20px; color: var(--text-secondary); max-width: 520px;
+      line-height: 1.6; margin-bottom: 40px;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+    .hero-cta {
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+    .hero-stats {
+      display: flex; gap: 40px; margin-top: 64px;
+      animation: fadeUp 0.8s 0.4s ease both;
+    }
+    .hero-stat-item { }
+    .hero-stat-num {
+      font-family: var(--font-head); font-size: 28px; font-weight: 700;
+      color: var(--accent-blue);
+    }
+    .hero-stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* gradient orbs */
+    .orb {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      filter: blur(100px); opacity: 0.15;
+    }
+    .orb-1 { width: 600px; height: 600px; background: var(--accent-blue); right: -100px; top: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: var(--accent-purple); right: 200px; bottom: 0; }
+
+    /* ─── Section: Pain Points ──────────────────── */
+    #pain {
+      background: var(--bg-secondary);
+      padding: 100px 0;
+    }
+    .pain-grid {
+      display: grid; grid-template-columns: 1fr 60px 1fr; gap: 0;
+      align-items: center; max-width: 900px; margin: 0 auto;
+    }
+    .pain-col { }
+    .pain-divider {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .pain-divider-line { width: 1px; height: 200px; background: linear-gradient(to bottom, transparent, var(--border-glow), transparent); }
+    .pain-divider span {
+      font-family: var(--font-head); font-size: 11px; font-weight: 700;
+      color: var(--accent-blue); letter-spacing: 0.1em; text-transform: uppercase;
+      writing-mode: vertical-lr;
+    }
+    .pain-item {
+      padding: 20px 0; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .pain-item:last-child { border-bottom: none; }
+    .pain-icon { font-size: 20px; margin-top: 2px; flex-shrink: 0; }
+    .pain-title { font-family: var(--font-head); font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+    .pain-desc  { font-size: 14px; color: var(--text-secondary); }
+    .pain-col.bad .pain-icon { opacity: 0.5; }
+    .pain-col.bad .pain-title { color: var(--text-secondary); }
+    .pain-col.good .pain-icon { color: var(--accent-blue); }
+    .pain-col.good .pain-title { color: var(--text-primary); }
+
+    /* ─── Services Section ──────────────────────── */
+    .services-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    }
+    .service-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 32px 28px;
+      position: relative; overflow: hidden;
+      cursor: default;
+      transition: all 0.35s ease;
+    }
+    .service-card::before {
+      content: ''; position: absolute;
+      inset: 0; border-radius: inherit;
+      background: linear-gradient(135deg, rgba(0,212,255,0.05) 0%, transparent 60%);
+      opacity: 0; transition: opacity 0.35s;
+    }
+    .service-card:hover { transform: translateY(-6px); border-color: var(--border-glow); box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(0,212,255,0.08); }
+    .service-card:hover::before { opacity: 1; }
+    .service-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 20px;
+    }
+    .service-title { font-family: var(--font-head); font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+    .service-desc  { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .service-more {
+      font-size: 13px; font-family: var(--font-head); font-weight: 600;
+      color: var(--accent-blue); margin-top: 16px; display: none;
+    }
+    .service-card:hover .service-more { display: block; }
+
+    /* ─── Stats Counter ─────────────────────────── */
+    #stats { background: var(--bg-secondary); padding: 80px 0; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); }
+    .stat-item {
+      background: var(--bg-secondary);
+      padding: 48px 40px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: var(--font-head); font-size: 56px; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1;
+    }
+    .stat-suffix { font-size: 32px; }
+    .stat-label { font-size: 15px; color: var(--text-secondary); margin-top: 8px; font-family: var(--font-head); }
+
+    /* ─── Process Timeline ──────────────────────── */
+    .process-timeline {
+      position: relative;
+      display: flex; align-items: flex-start; gap: 0;
+      overflow-x: auto; padding-bottom: 20px;
+    }
+    .process-timeline::before {
+      content: ''; position: absolute;
+      top: 28px; left: 0; right: 0; height: 2px;
+      background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
+    }
+    .process-node {
+      flex: 1; min-width: 150px; position: relative;
+      padding-top: 56px; padding-right: 16px; cursor: pointer;
+    }
+    .process-dot {
+      position: absolute; top: 18px; left: 0;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--bg-primary); border: 2px solid var(--accent-blue);
+      box-shadow: 0 0 16px rgba(0,212,255,0.5);
+      transition: all 0.3s;
+    }
+    .process-node:hover .process-dot {
+      background: var(--accent-blue); box-shadow: 0 0 28px rgba(0,212,255,0.8);
+    }
+    .process-step { font-size: 11px; color: var(--accent-blue); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; font-family: var(--font-head); }
+    .process-name { font-family: var(--font-head); font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+    .process-duration { font-size: 13px; color: var(--text-secondary); }
+    .process-detail {
+      font-size: 13px; color: var(--text-secondary); margin-top: 10px;
+      max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+    }
+    .process-node.active .process-detail { max-height: 80px; }
+
+    /* ─── Pricing / Tiers ───────────────────────── */
+    #pricing { background: var(--bg-secondary); }
+    .tiers-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .tier-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 40px 36px;
+      position: relative; overflow: hidden;
+      transition: all 0.35s;
+    }
+    .tier-card.featured {
+      border-color: var(--accent-blue);
+      background: linear-gradient(135deg, rgba(0,212,255,0.06) 0%, rgba(123,97,255,0.06) 100%);
+    }
+    .tier-badge {
+      position: absolute; top: 20px; right: 20px;
+      background: var(--accent-blue); color: #000;
+      font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px;
+      font-family: var(--font-head); letter-spacing: 0.06em;
+    }
+    .tier-icon { font-size: 32px; margin-bottom: 20px; }
+    .tier-name {
+      font-family: var(--font-head); font-size: 22px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .tier-tagline { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+    .tier-price {
+      font-family: var(--font-head); font-size: 32px; font-weight: 700;
+      color: var(--accent-blue); margin-bottom: 6px;
+    }
+    .tier-period { font-size: 13px; color: var(--text-secondary); margin-bottom: 28px; }
+    .tier-divider { height: 1px; background: var(--border); margin-bottom: 24px; }
+    .tier-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .tier-features li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 14px; color: var(--text-secondary);
+    }
+    .tier-features li::before { content: '✓'; color: var(--accent-blue); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .tier-cta { width: 100%; text-align: center; justify-content: center; }
+
+    /* ─── Trust Section ─────────────────────────── */
+    .trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .trust-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 36px;
+    }
+    .cert-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+    .cert-tag {
+      padding: 6px 14px; border-radius: 6px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      font-family: var(--font-head); font-size: 13px; font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .cert-tag:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+    .founder-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-card); padding: 36px;
+      display: flex; gap: 24px; align-items: flex-start;
+    }
+    .founder-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    blockquote { font-size: 17px; color: var(--text-primary); font-style: italic; line-height: 1.65; margin-bottom: 12px; }
+    .founder-name { font-family: var(--font-head); font-weight: 600; font-size: 15px; }
+    .founder-role { font-size: 13px; color: var(--text-secondary); }
+
+    /* ─── Capability Matrix ─────────────────────── */
+    .capability-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .cap-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .cap-card:hover { border-color: var(--border-glow); background: var(--bg-card-2); }
+    .cap-icon { font-size: 28px; margin-bottom: 12px; }
+    .cap-name { font-family: var(--font-head); font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+    .cap-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .cap-expand { font-size: 13px; color: var(--accent-blue); font-weight: 600; margin-top: 10px; display: none; }
+    .cap-card:hover .cap-expand { display: block; }
+
+    /* ─── Insights / Blog ───────────────────────── */
+    .blog-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .blog-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-card); overflow: hidden;
+      transition: all 0.3s; cursor: pointer;
+    }
+    .blog-card:hover { transform: translateY(-4px); border-color: var(--border-glow); }
+    .blog-thumb {
+      height: 180px;
+      background: linear-gradient(135deg, #111 0%, #1a1a2e 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px; position: relative; overflow: hidden;
+    }
+    .blog-thumb::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5));
+    }
+    .blog-body { padding: 24px; }
+    .blog-cat { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-blue); font-family: var(--font-head); margin-bottom: 10px; }
+    .blog-title { font-family: var(--font-head); font-size: 17px; font-weight: 600; margin-bottom: 8px; line-height: 1.35; }
+    .blog-excerpt { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .blog-meta { font-size: 12px; color: var(--text-muted); margin-top: 16px; }
+
+    /* ─── Contact / CTA ─────────────────────────── */
+    #contact { background: var(--bg-secondary); }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+    .contact-form {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-card); padding: 40px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-label { font-family: var(--font-head); font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block; letter-spacing: 0.04em; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-primary); font-family: var(--font-body);
+      font-size: 15px; padding: 12px 16px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent-blue); }
+    .form-textarea { resize: vertical; min-height: 120px; }
+    .form-select option { background: var(--bg-card); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-submit { width: 100%; justify-content: center; padding: 16px; font-size: 16px; }
+
+    .contact-info { }
+    .contact-calendly {
+      background: var(--bg-card); border: 1px solid var(--border-glow);
+      border-radius: var(--radius-card); padding: 36px;
+      text-align: center; margin-bottom: 24px;
+    }
+    .calendly-icon { font-size: 48px; margin-bottom: 16px; }
+    .contact-info-items { display: flex; flex-direction: column; gap: 16px; }
+    .contact-info-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 20px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .contact-info-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .contact-info-title { font-family: var(--font-head); font-weight: 600; font-size: 15px; margin-bottom: 3px; }
+    .contact-info-val { font-size: 14px; color: var(--text-secondary); }
+
+    /* ─── FAQ ───────────────────────────────────── */
+    .faq-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 40px; }
+    .faq-tab {
+      padding: 8px 18px; border-radius: 100px;
+      font-family: var(--font-head); font-size: 14px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border);
+      background: transparent; color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .faq-tab.active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(0,212,255,0.08); }
+    .faq-list { display: flex; flex-direction: column; gap: 12px; }
+    .faq-item {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .faq-question {
+      padding: 20px 24px; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--font-head); font-weight: 600; font-size: 16px;
+      transition: color 0.2s;
+    }
+    .faq-question:hover { color: var(--accent-blue); }
+    .faq-arrow {
+      font-size: 18px; color: var(--text-secondary); transition: transform 0.3s;
+      flex-shrink: 0; margin-left: 16px;
+    }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--accent-blue); }
+    .faq-answer {
+      max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+      padding: 0 24px; font-size: 15px; color: var(--text-secondary); line-height: 1.7;
+    }
+    .faq-item.open .faq-answer { max-height: 300px; padding-bottom: 20px; }
+
+    /* ─── Footer ────────────────────────────────── */
+    footer {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 60px 0 32px;
+    }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+    .footer-brand p { font-size: 14px; color: var(--text-secondary); margin-top: 12px; max-width: 280px; line-height: 1.6; }
+    .footer-col-title { font-family: var(--font-head); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 16px; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-links a { font-size: 14px; color: var(--text-secondary); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text-primary); }
+    .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 32px; border-top: 1px solid var(--border); }
+    .footer-copy { font-size: 13px; color: var(--text-muted); }
+    .footer-legal { display: flex; gap: 24px; }
+    .footer-legal a { font-size: 13px; color: var(--text-muted); transition: color 0.2s; }
+    .footer-legal a:hover { color: var(--text-secondary); }
+
+    /* ─── CTA Banner ────────────────────────────── */
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(123,97,255,0.08) 100%);
+      border: 1px solid rgba(0,212,255,0.15);
+      border-radius: 24px; padding: 80px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .cta-banner::before {
+      content: ''; position: absolute;
+      top: -100px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(0,212,255,0.1), transparent 70%);
+    }
+    .cta-banner h2 { position: relative; }
+    .cta-banner p { position: relative; font-size: 18px; margin: 16px auto 40px; max-width: 480px; }
+    .cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; }
+
+    /* ─── Compliance Page ───────────────────────── */
+    .compliance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .compliance-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-card); padding: 32px;
+    }
+    .compliance-icon { font-size: 36px; margin-bottom: 16px; }
+    .compliance-name { font-family: var(--font-head); font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .compliance-full { font-size: 13px; color: var(--accent-blue); margin-bottom: 12px; font-weight: 600; }
+    .compliance-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.65; }
+
+    /* ─── Page nav (multi-page) ─────────────────── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ─── Animations ────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .reveal {
+      opacity: 0; transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── Scrollbar ─────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    /* ─── Responsive ────────────────────────────── */
+    @media (max-width: 1024px) {
+      .services-grid { grid-template-columns: repeat(2,1fr); }
+      .tiers-grid { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .trust-grid { grid-template-columns: 1fr; }
+      .blog-grid { grid-template-columns: repeat(2,1fr); }
+      .capability-grid { grid-template-columns: repeat(2,1fr); }
+      .compliance-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .container { padding: 0 24px; }
+      .section { padding: 80px 0; }
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+      #navbar { padding: 0 24px; }
+      .hero-stats { flex-wrap: wrap; gap: 24px; }
+      .services-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .tiers-grid { max-width: none; }
+      .blog-grid { grid-template-columns: 1fr; }
+      .capability-grid { grid-template-columns: 1fr; }
+      .pain-grid { grid-template-columns: 1fr; }
+      .pain-divider { display: none; }
+      .cta-banner { padding: 40px 24px; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+  NAVBAR
+══════════════════════════════════════════════════════════ -->
+<nav id="navbar">
+  <a class="nav-logo" href="#" onclick="showPage('home')">
+    <div class="nav-logo-dot"></div>
+    McGlobal
+  </a>
+  <div class="nav-links">
+    <a href="#" onclick="showPage('services')">Services</a>
+    <a href="#" onclick="showPage('portfolio')">Portfolio</a>
+    <a href="#" onclick="showPage('insights')">Insights</a>
+    <a href="#" onclick="showPage('about')">About</a>
+    <a href="#" onclick="showPage('compliance')">Compliance</a>
+    <a href="#" onclick="showPage('faq')">FAQ</a>
+  </div>
+  <div class="nav-cta">
+    <a href="#contact-section" class="btn btn-outline" style="padding:10px 20px;font-size:13px;" onclick="showPage('contact')">Get in Touch</a>
+    <a href="#" class="btn btn-primary" style="padding:10px 20px;font-size:13px;" onclick="showPage('contact')">Book Free Consultation</a>
+  </div>
+  <div class="hamburger" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- Mobile Nav -->
+<div id="mobile-nav" style="display:none;position:fixed;top:72px;left:0;right:0;background:rgba(10,10,10,0.98);backdrop-filter:blur(20px);padding:24px;z-index:999;border-bottom:1px solid var(--border);flex-direction:column;gap:20px;">
+  <a href="#" onclick="showPage('services');toggleMobileMenu()" style="font-family:var(--font-head);font-size:16px;font-weight:600;color:var(--text-secondary)">Services</a>
+  <a href="#" onclick="showPage('portfolio');toggleMobileMenu()" style="font-family:var(--font-head);font-size:16px;font-weight:600;color:var(--text-secondary)">Portfolio</a>
+  <a href="#" onclick="showPage('insights');toggleMobileMenu()" style="font-family:var(--font-head);font-size:16px;font-weight:600;color:var(--text-secondary)">Insights</a>
+  <a href="#" onclick="showPage('about');toggleMobileMenu()" style="font-family:var(--font-head);font-size:16px;font-weight:600;color:var(--text-secondary)">About</a>
+  <a href="#" onclick="showPage('contact');toggleMobileMenu()" class="btn btn-primary">Book Free Consultation</a>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+  PAGE: HOME
+══════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Physical AI R&D as a Service · Shenzhen, China</div>
+      <h1 class="hero-title">Your Physical AI R&D<br/><span class="highlight">Team in Shenzhen</span></h1>
+      <p class="hero-subtitle">From concept to prototype in 60 days. No hardware team needed. No supply chain headaches. Just results.</p>
+      <div class="hero-cta">
+        <a href="#" class="btn btn-primary" onclick="showPage('contact')">
+          📅 Book a Free Consultation
+        </a>
+        <a href="#" class="btn btn-outline" onclick="showPage('services')">
+          See How It Works →
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat-item">
+          <div class="hero-stat-num" data-count="10" data-suffix="+">0+</div>
+          <div class="hero-stat-label">Years Experience</div>
+        </div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-num" data-count="200" data-suffix="+">0+</div>
+          <div class="hero-stat-label">Verified Manufacturers</div>
+        </div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-num" data-count="60" data-suffix=" Days">0</div>
+          <div class="hero-stat-label">To First Prototype</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAIN POINTS -->
+  <section id="pain">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:60px;">
+        <div class="tag">⚡ The Problem vs Our Solution</div>
+        <h2 class="section-title">Why Brands Choose to Subscribe</h2>
+        <p class="section-sub" style="margin:0 auto;">Building an AI-powered physical product in-house is slow, expensive, and risky. We've already solved the hard problems.</p>
+      </div>
+      <div class="pain-grid">
+        <div class="pain-col bad">
+          <div style="margin-bottom:24px;"><span style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted)">❌ Building In-House</span></div>
+          <div class="pain-item">
+            <div class="pain-icon">⏱️</div>
+            <div><div class="pain-title">12–18 Month Timeline</div><div class="pain-desc">Hire, onboard, iterate. Time is your biggest competitor.</div></div>
+          </div>
+          <div class="pain-item">
+            <div class="pain-icon">💸</div>
+            <div><div class="pain-title">$500K+ Upfront Investment</div><div class="pain-desc">Hardware engineers, tooling, mold costs before a single unit ships.</div></div>
+          </div>
+          <div class="pain-item">
+            <div class="pain-icon">🧩</div>
+            <div><div class="pain-title">Unknown Supply Chain</div><div class="pain-desc">Finding reliable AI component vendors takes years of relationship building.</div></div>
+          </div>
+          <div class="pain-item">
+            <div class="pain-icon">⚠️</div>
+            <div><div class="pain-title">High Compliance Risk</div><div class="pain-desc">FCC, CPSIA, ASTM F963 — one misstep and your shipment is detained.</div></div>
+          </div>
+        </div>
+        <div class="pain-divider">
+          <div class="pain-divider-line"></div>
+          <span>VS</span>
+          <div class="pain-divider-line"></div>
+        </div>
+        <div class="pain-col good">
+          <div style="margin-bottom:24px;"><span style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent-blue)">✓ With McGlobal</span></div>
+          <div class="pain-item">
+            <div class="pain-icon">🚀</div>
+            <div><div class="pain-title">60-Day First Prototype</div><div class="pain-desc">Subscribe → Brief → Design → Physical prototype. Tracked, predictable.</div></div>
+          </div>
+          <div class="pain-item">
+            <div class="pain-icon">💡</div>
+            <div><div class="pain-title">Fixed Subscription Cost</div><div class="pain-desc">No capital expenditure. No surprise mold invoices. Budget certainty.</div></div>
+          </div>
+          <div class="pain-item">
+            <div class="pain-icon">🔗</div>
+            <div><div class="pain-title">200+ Vetted Factories</div><div class="pain-desc">Day-one access to a decade of Shenzhen supply chain relationships.</div></div>
+          </div>
+          <div class="pain-item">
+            <div class="pain-icon">🛡️</div>
+            <div><div class="pain-title">Compliance Built-In</div><div class="pain-desc">FCC, CPSIA, ASTM F963 expertise baked into every project phase.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES OVERVIEW -->
+  <section class="section" id="services-overview">
+    <div class="container">
+      <div class="tag reveal">🔧 Core Services</div>
+      <h2 class="section-title reveal">Everything You Need,<br/>Nothing You Don't</h2>
+      <p class="section-sub reveal">Four pillars of our R&D-as-a-Service platform, working together seamlessly.</p>
+      <div class="services-grid reveal">
+        <div class="service-card">
+          <div class="service-icon">💡</div>
+          <div class="service-title">Concept Design</div>
+          <div class="service-desc">Translate your brief into a technical product concept — form, function, AI interaction model, and target BOM range.</div>
+          <div class="service-more">Learn more →</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">🔩</div>
+          <div class="service-title">Rapid Prototyping</div>
+          <div class="service-desc">Physical prototype in 2–3 weeks. From 3D renders to real-world parts you can hold, test, and iterate.</div>
+          <div class="service-more">Learn more →</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">🏭</div>
+          <div class="service-title">Supply Chain Access</div>
+          <div class="service-desc">Skip 5 years of factory sourcing. Tap into our vetted network across Shenzhen, Dongguan, and Huizhou.</div>
+          <div class="service-more">Learn more →</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">🔄</div>
+          <div class="service-title">Ongoing Iteration</div>
+          <div class="service-desc">Firmware upgrades, AI model fine-tuning, new feature development — your product improves every sprint.</div>
+          <div class="service-more">Learn more →</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section id="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-num"><span class="counter" data-target="10">0</span><span class="stat-suffix">+</span></div>
+          <div class="stat-label">Years in Shenzhen Supply Chain</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num"><span class="counter" data-target="200">0</span><span class="stat-suffix">+</span></div>
+          <div class="stat-label">Verified Manufacturers</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num"><span class="counter" data-target="50">0</span><span class="stat-suffix">+</span></div>
+          <div class="stat-label">Component Categories</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num"><span class="counter" data-target="60">0</span><span class="stat-suffix">-Day</span></div>
+          <div class="stat-label">First Prototype Delivery</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section class="section" id="process">
+    <div class="container">
+      <div class="tag reveal">📋 How It Works</div>
+      <h2 class="section-title reveal">From Subscribe to<br/>Scale in Six Steps</h2>
+      <p class="section-sub reveal">A clear, client-transparent process with milestone tracking at every stage.</p>
+      <div class="process-timeline reveal" id="processTimeline">
+        <div class="process-node" onclick="toggleProcess(this)">
+          <div class="process-dot"></div>
+          <div class="process-step">Step 01</div>
+          <div class="process-name">Subscribe</div>
+          <div class="process-duration">Day 0</div>
+          <div class="process-detail">Choose your tier, sign the service agreement via DocuSign, and gain immediate access to the platform and your dedicated project manager.</div>
+        </div>
+        <div class="process-node" onclick="toggleProcess(this)">
+          <div class="process-dot"></div>
+          <div class="process-step">Step 02</div>
+          <div class="process-name">Brief</div>
+          <div class="process-duration">Week 1</div>
+          <div class="process-detail">Deep-dive session with your PM. Define AI interaction model, target market, regulatory requirements, and success metrics.</div>
+        </div>
+        <div class="process-node" onclick="toggleProcess(this)">
+          <div class="process-dot"></div>
+          <div class="process-step">Step 03</div>
+          <div class="process-name">Design</div>
+          <div class="process-duration">Weeks 2–3</div>
+          <div class="process-detail">Industrial design concepts, 3D renders, AI architecture proposal, and component selection. Three concepts, one direction selected.</div>
+        </div>
+        <div class="process-node" onclick="toggleProcess(this)">
+          <div class="process-dot"></div>
+          <div class="process-step">Step 04</div>
+          <div class="process-name">Prototype</div>
+          <div class="process-duration">Weeks 4–8</div>
+          <div class="process-detail">Physical prototype built in Shenzhen. Hardware assembly, firmware loading, AI model integration. Shipped to your door.</div>
+        </div>
+        <div class="process-node" onclick="toggleProcess(this)">
+          <div class="process-dot"></div>
+          <div class="process-step">Step 05</div>
+          <div class="process-name">Iterate</div>
+          <div class="process-duration">Ongoing</div>
+          <div class="process-detail">Your feedback drives rapid sprints. Hardware refinements, AI model tuning, new feature additions — continuous improvement loops.</div>
+        </div>
+        <div class="process-node" onclick="toggleProcess(this)">
+          <div class="process-dot"></div>
+          <div class="process-step">Step 06</div>
+          <div class="process-name">Scale</div>
+          <div class="process-duration">When Ready</div>
+          <div class="process-detail">Mass production coordination, compliance certification support, and quality inspection — we manage the factory relationship so you don't have to.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST SECTION -->
+  <section class="section" id="trust" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag reveal">🏆 Why Trust Us</div>
+      <h2 class="section-title reveal">Built on a Decade of<br/>Shenzhen Relationships</h2>
+      <p class="section-sub reveal">No agency veneer. Real factories, real engineers, real results.</p>
+      <div class="trust-grid reveal">
+        <div class="trust-card">
+          <h3 style="margin-bottom:16px;">🛡️ Compliance Certifications</h3>
+          <p style="font-size:14px;margin-bottom:4px;">We navigate North American regulatory requirements so your product ships legally, safely, and on time.</p>
+          <div class="cert-grid">
+            <div class="cert-tag">FCC</div>
+            <div class="cert-tag">CPSIA</div>
+            <div class="cert-tag">ASTM F963</div>
+            <div class="cert-tag">CA Prop 65</div>
+            <div class="cert-tag">CCPSA</div>
+            <div class="cert-tag">COPPA</div>
+          </div>
+        </div>
+        <div class="founder-card">
+          <div class="founder-avatar">👨‍💼</div>
+          <div>
+            <blockquote>"I spent 10 years in Shenzhen figuring out which factories actually deliver. I built McGlobal so you don't have to spend yours making the same expensive mistakes I made."</blockquote>
+            <div class="founder-name">Simon — Founder & CEO</div>
+            <div class="founder-role">10+ Years Shenzhen Supply Chain · Cross-border Trade Expert</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-banner reveal">
+        <div class="tag" style="margin:0 auto 20px;">🚀 Ready to Start?</div>
+        <h2>Build Your AI-Powered Product<br/>Without the Risk</h2>
+        <p>30-minute Zoom call. No pitch deck. Just a real conversation about your project.</p>
+        <div class="cta-btns">
+          <a href="#" class="btn btn-primary" onclick="showPage('contact')">📅 Book Free Consultation</a>
+          <a href="#" class="btn btn-outline" onclick="downloadReport()">📄 Download Free Market Report</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /page-home -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+  PAGE: SERVICES
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-services">
+  <div style="padding-top:72px;"></div>
+
+  <!-- Hero -->
+  <section class="section" style="background:var(--bg-secondary);padding-bottom:80px;">
+    <div class="container">
+      <div class="tag">🔧 Services</div>
+      <h1 style="max-width:700px;margin-bottom:20px;">We Are Your Outsourced R&D Department for AI-Powered Physical Products</h1>
+      <p style="font-size:18px;color:var(--text-secondary);max-width:600px;">Subscribe to a tier, get matched with a project manager, and start building. We handle everything from concept to compliance.</p>
+    </div>
+  </section>
+
+  <!-- Tiers -->
+  <section id="pricing" class="section">
+    <div class="container">
+      <div class="tag reveal">💎 Membership Tiers</div>
+      <h2 class="section-title reveal">Choose Your Level of<br/>R&D Partnership</h2>
+      <p class="section-sub reveal">All prices are starting points. Final pricing is discussed after a consultation to match your specific needs.</p>
+      <div class="tiers-grid reveal">
+
+        <div class="tier-card">
+          <div class="tier-icon">🔭</div>
+          <div class="tier-name">Explorer</div>
+          <div class="tier-tagline">Explore the market before you commit</div>
+          <div class="tier-price">$2,000</div>
+          <div class="tier-period">per quarter, starting from</div>
+          <div class="tier-divider"></div>
+          <ul class="tier-features">
+            <li>Monthly industry trend reports (anonymized)</li>
+            <li>1× quarterly 45-min 1-on-1 consultation</li>
+            <li>Access to public component catalog</li>
+            <li>Quarterly online workshop access</li>
+            <li>Free industry white paper downloads</li>
+            <li>Physical AI market Q&amp;A community access</li>
+          </ul>
+          <a href="#" class="btn btn-outline tier-cta" onclick="showPage('contact')">Get Started →</a>
+        </div>
+
+        <div class="tier-card featured">
+          <div class="tier-badge">Most Popular</div>
+          <div class="tier-icon">🏗️</div>
+          <div class="tier-name">Builder</div>
+          <div class="tier-tagline">Active product development & prototyping</div>
+          <div class="tier-price">$20,000</div>
+          <div class="tier-period">per year, starting from</div>
+          <div class="tier-divider"></div>
+          <ul class="tier-features">
+            <li>Everything in Explorer</li>
+            <li>2× custom project starts per year (design → prototype)</li>
+            <li>Dedicated project manager</li>
+            <li>Full technical documentation access</li>
+            <li>Supplier matching &amp; recommendation</li>
+            <li>2–3 week rapid prototype turnaround</li>
+            <li>2× monthly deep-dive technical sessions</li>
+            <li>Real-time project dashboard access</li>
+          </ul>
+          <a href="#" class="btn btn-primary tier-cta" onclick="showPage('contact')">Talk to Us →</a>
+        </div>
+
+        <div class="tier-card">
+          <div class="tier-icon">🤝</div>
+          <div class="tier-name">Partner</div>
+          <div class="tier-tagline">Full strategic R&D alliance</div>
+          <div class="tier-price">$100,000+</div>
+          <div class="tier-period">per year, custom pricing</div>
+          <div class="tier-divider"></div>
+          <ul class="tier-features">
+            <li>Everything in Builder</li>
+            <li>Unlimited project starts</li>
+            <li>Priority scheduling + expedite channel</li>
+            <li>Co-development with partial IP sharing option</li>
+            <li>Quarterly Shenzhen factory tours (in-person)</li>
+            <li>Custom AI model training support</li>
+            <li>Exclusive market/territory protection option</li>
+            <li>Dedicated Slack channel · 7×24 response</li>
+            <li>Annual strategic planning session</li>
+          </ul>
+          <a href="#" class="btn btn-purple tier-cta" onclick="showPage('contact')">Apply for Partnership →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Service Process Detail -->
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag reveal">📍 Delivery Timeline</div>
+      <h2 class="section-title reveal">Exactly What Happens,<br/>And When</h2>
+      <div style="display:flex;flex-direction:column;gap:0;margin-top:48px;" class="reveal">
+        <div style="display:grid;grid-template-columns:160px 1fr;gap:32px;padding:32px 0;border-bottom:1px solid var(--border);align-items:start;">
+          <div>
+            <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--accent-blue);">Week 1</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Requirement Intake</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:18px;font-weight:600;margin-bottom:8px;">Discovery &amp; Briefing</div>
+            <p style="font-size:14px;margin-bottom:12px;">Deep-dive session covering AI interaction requirements, target market, compliance territory, budget parameters, and timeline expectations.</p>
+            <div style="font-size:13px;color:var(--accent-blue);font-weight:600;">Deliverables: Signed project brief, milestone schedule, team introductions</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:160px 1fr;gap:32px;padding:32px 0;border-bottom:1px solid var(--border);align-items:start;">
+          <div>
+            <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--accent-blue);">Weeks 2–3</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Concept Design</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:18px;font-weight:600;margin-bottom:8px;">Industrial Design &amp; AI Architecture</div>
+            <p style="font-size:14px;margin-bottom:12px;">Three concept directions, 3D rendered visualizations, AI interaction flow diagrams, preliminary BOM, and component sourcing shortlist.</p>
+            <div style="font-size:13px;color:var(--accent-blue);font-weight:600;">Deliverables: 3 concept renders, AI spec doc, BOM draft</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:160px 1fr;gap:32px;padding:32px 0;border-bottom:1px solid var(--border);align-items:start;">
+          <div>
+            <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--accent-blue);">Week 4</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Component Selection</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:18px;font-weight:600;margin-bottom:8px;">Technical Specification Lock</div>
+            <p style="font-size:14px;margin-bottom:12px;">Final component selection, supplier confirmation, PCB schematic review, firmware architecture definition, and production planning.</p>
+            <div style="font-size:13px;color:var(--accent-blue);font-weight:600;">Deliverables: Final BOM, schematic draft, supplier contracts</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:160px 1fr;gap:32px;padding:32px 0;border-bottom:1px solid var(--border);align-items:start;">
+          <div>
+            <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--accent-blue);">Weeks 5–8</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Prototype Build</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:18px;font-weight:600;margin-bottom:8px;">Physical Build &amp; Firmware Integration</div>
+            <p style="font-size:14px;margin-bottom:12px;">Factory coordination, PCB assembly, shell fabrication (3D print or CNC), AI firmware loading, and QC testing before shipment to you.</p>
+            <div style="font-size:13px;color:var(--accent-blue);font-weight:600;">Deliverables: Physical prototype + QC report + firmware source</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:160px 1fr;gap:32px;padding:32px 0;border-bottom:1px solid var(--border);align-items:start;">
+          <div>
+            <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--accent-blue);">Weeks 9–10</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Validation</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:18px;font-weight:600;margin-bottom:8px;">Testing &amp; Feedback Loop</div>
+            <p style="font-size:14px;margin-bottom:12px;">You test the prototype, we collect structured feedback via the platform. Revisions are triaged and scheduled for the next sprint.</p>
+            <div style="font-size:13px;color:var(--accent-blue);font-weight:600;">Deliverables: Revision list, sprint plan, updated timeline</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:160px 1fr;gap:32px;padding:32px 0;align-items:start;">
+          <div>
+            <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--accent-blue);">Ongoing</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Continuous Iteration</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:18px;font-weight:600;margin-bottom:8px;">Sprints Until Market-Ready</div>
+            <p style="font-size:14px;margin-bottom:12px;">Regular sprint cycles address hardware revisions, AI model improvements, and new feature development. You scale when you're ready.</p>
+            <div style="font-size:13px;color:var(--accent-blue);font-weight:600;">Deliverables: Sprint releases, updated firmware, new samples</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ preview on Services -->
+  <section class="section">
+    <div class="container" style="text-align:center;">
+      <div class="cta-banner">
+        <h2>Questions Before Committing?</h2>
+        <p>Browse our detailed FAQ or book a free 30-minute call to get direct answers.</p>
+        <div class="cta-btns">
+          <a href="#" class="btn btn-primary" onclick="showPage('faq')">Browse FAQ</a>
+          <a href="#" class="btn btn-outline" onclick="showPage('contact')">Book Free Call</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-services -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+  PAGE: PORTFOLIO
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-portfolio">
+  <div style="padding-top:72px;"></div>
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag">🎨 Portfolio</div>
+      <h1 style="max-width:680px;margin-bottom:20px;">Capability Proof,<br/>Not Just Claims</h1>
+      <p style="font-size:18px;color:var(--text-secondary);max-width:600px;">Real prototypes we've built. Real technologies we've integrated. Real supply chain relationships we maintain.</p>
+    </div>
+  </section>
+
+  <!-- Prototype Showcase -->
+  <section class="section">
+    <div class="container">
+      <div class="tag reveal">🤖 Concept Prototypes</div>
+      <h2 class="section-title reveal">Prototypes We've Built</h2>
+      <p class="section-sub reveal">Designed and manufactured in-house to demonstrate our full R&D pipeline.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;" class="reveal">
+
+        <div class="blog-card">
+          <div class="blog-thumb" style="background:linear-gradient(135deg,#0a1628,#1a0a2e);height:220px;">
+            <div style="position:relative;z-index:1;text-align:center;">
+              <div style="font-size:64px;line-height:1;">🤖</div>
+              <div style="font-size:12px;color:var(--accent-blue);font-weight:600;margin-top:8px;font-family:var(--font-head);">PROTOTYPE A</div>
+            </div>
+          </div>
+          <div class="blog-body">
+            <div class="blog-cat">Voice + Emotion AI</div>
+            <div class="blog-title">Companion-X1 — Conversational AI Plush</div>
+            <div class="blog-excerpt">Soft-shell form factor with embedded voice AI, emotion detection via microphone array, LED expressiveness system. Build time: 6 weeks.</div>
+            <div class="blog-meta">AI Integration · Voice Recognition · Embedded LED · CPSIA Tested</div>
+          </div>
+        </div>
+
+        <div class="blog-card">
+          <div class="blog-thumb" style="background:linear-gradient(135deg,#0a2816,#1a2a0a);height:220px;">
+            <div style="position:relative;z-index:1;text-align:center;">
+              <div style="font-size:64px;line-height:1;">🦾</div>
+              <div style="font-size:12px;color:#00ff88;font-weight:600;margin-top:8px;font-family:var(--font-head);">PROTOTYPE B</div>
+            </div>
+          </div>
+          <div class="blog-body">
+            <div class="blog-cat" style="color:#00ff88;">Vision + Motion</div>
+            <div class="blog-title">EduBot-M2 — Learning Robot</div>
+            <div class="blog-excerpt">Camera-enabled object recognition with 3-axis servo movement. Teaches STEM concepts via interactive play sessions. Build time: 8 weeks.</div>
+            <div class="blog-meta">Computer Vision · Servo Control · WiFi · FCC Tested</div>
+          </div>
+        </div>
+
+        <div class="blog-card">
+          <div class="blog-thumb" style="background:linear-gradient(135deg,#1a0a0a,#2a1a0a);height:220px;">
+            <div style="position:relative;z-index:1;text-align:center;">
+              <div style="font-size:64px;line-height:1;">🐾</div>
+              <div style="font-size:12px;color:#ff6b35;font-weight:600;margin-top:8px;font-family:var(--font-head);">PROTOTYPE C</div>
+            </div>
+          </div>
+          <div class="blog-body">
+            <div class="blog-cat" style="color:#ff6b35;">Haptic + LLM</div>
+            <div class="blog-title">PetPal-S3 — Tactile Companion</div>
+            <div class="blog-excerpt">Pressure-sensitive skin with LLM-powered personality engine. Responds to touch patterns with adaptive behavior and emotional memory. Build time: 9 weeks.</div>
+            <div class="blog-meta">Haptic Sensors · LLM Integration · BLE · ASTM F963</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Capability Matrix -->
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag reveal">⚡ Technology Stack</div>
+      <h2 class="section-title reveal">What We Can Build<br/>Into Your Product</h2>
+      <p class="section-sub reveal">Click any module to learn more about our technical depth in that area.</p>
+      <div class="capability-grid reveal">
+        <div class="cap-card">
+          <div class="cap-icon">🎤</div>
+          <div class="cap-name">Voice Interaction</div>
+          <div class="cap-desc">Wake-word detection, continuous conversation, multi-language TTS/ASR, noise cancellation for child environments.</div>
+          <div class="cap-expand">View components →</div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">👁️</div>
+          <div class="cap-name">Visual Recognition</div>
+          <div class="cap-desc">Embedded cameras with on-device or cloud CV for object recognition, face tracking, gesture control.</div>
+          <div class="cap-expand">View components →</div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">🤸</div>
+          <div class="cap-name">Motion Control</div>
+          <div class="cap-desc">Servo, stepper, and brushless motors for expressive movement. Kinematic design for lifelike gestures.</div>
+          <div class="cap-expand">View components →</div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">✋</div>
+          <div class="cap-name">Haptic Feedback</div>
+          <div class="cap-desc">Capacitive touch, pressure sensors, vibrotactile feedback engines for physical responsiveness.</div>
+          <div class="cap-expand">View components →</div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">🌐</div>
+          <div class="cap-name">Connectivity</div>
+          <div class="cap-desc">WiFi, Bluetooth LE, LTE modules. App pairing, OTA firmware updates, cloud data sync.</div>
+          <div class="cap-expand">View components →</div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">🧠</div>
+          <div class="cap-name">AI Model Integration</div>
+          <div class="cap-desc">Custom fine-tuned LLMs, on-device inference (edge AI chips), personality engines, and adaptive behavior trees.</div>
+          <div class="cap-expand">View components →</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cost Comparison -->
+  <section class="section">
+    <div class="container">
+      <div class="tag reveal">📊 ROI Analysis</div>
+      <h2 class="section-title reveal">In-House vs. McGlobal:<br/>The Numbers</h2>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);overflow:hidden;" class="reveal">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);">
+          <div style="padding:20px 24px;font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;border-right:1px solid var(--border);">Dimension</div>
+          <div style="padding:20px 24px;font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;border-right:1px solid var(--border);">❌ In-House</div>
+          <div style="padding:20px 24px;font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--accent-blue);text-transform:uppercase;letter-spacing:0.06em;">✓ McGlobal</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);">
+          <div style="padding:20px 24px;font-weight:600;border-right:1px solid var(--border);">Time to First Prototype</div>
+          <div style="padding:20px 24px;color:var(--text-secondary);border-right:1px solid var(--border);">12–18 months</div>
+          <div style="padding:20px 24px;color:var(--accent-blue);font-weight:600;">60 days</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);">
+          <div style="padding:20px 24px;font-weight:600;border-right:1px solid var(--border);">Upfront Investment</div>
+          <div style="padding:20px 24px;color:var(--text-secondary);border-right:1px solid var(--border);">$500K–$2M+</div>
+          <div style="padding:20px 24px;color:var(--accent-blue);font-weight:600;">From $20K/year</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);">
+          <div style="padding:20px 24px;font-weight:600;border-right:1px solid var(--border);">Supply Chain Access</div>
+          <div style="padding:20px 24px;color:var(--text-secondary);border-right:1px solid var(--border);">Build from scratch (3–5 years)</div>
+          <div style="padding:20px 24px;color:var(--accent-blue);font-weight:600;">Day 1, 200+ factories</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);">
+          <div style="padding:20px 24px;font-weight:600;border-right:1px solid var(--border);">Compliance Expertise</div>
+          <div style="padding:20px 24px;color:var(--text-secondary);border-right:1px solid var(--border);">Hire consultants ($5K–$20K/cert)</div>
+          <div style="padding:20px 24px;color:var(--accent-blue);font-weight:600;">Included in subscription</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
+          <div style="padding:20px 24px;font-weight:600;border-right:1px solid var(--border);">Iteration Speed</div>
+          <div style="padding:20px 24px;color:var(--text-secondary);border-right:1px solid var(--border);">Slow (headcount-constrained)</div>
+          <div style="padding:20px 24px;color:var(--accent-blue);font-weight:600;">2-week sprint cycles</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /page-portfolio -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+  PAGE: INSIGHTS
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-insights">
+  <div style="padding-top:72px;"></div>
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag">📖 Industry Insights</div>
+      <h1 style="max-width:680px;margin-bottom:20px;">Intelligence That Gives<br/>You an Edge</h1>
+      <p style="font-size:18px;color:var(--text-secondary);max-width:600px;">Market analysis, technical deep-dives, and regulatory updates — written by practitioners, not analysts.</p>
+      <div style="display:flex;gap:12px;margin-top:32px;flex-wrap:wrap;">
+        <a href="#" class="btn btn-primary" onclick="downloadReport()">📄 Download Free: Physical AI Market Entry Guide 2026</a>
+        <a href="#" class="btn btn-outline">📧 Subscribe to Monthly Newsletter</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="tag reveal">✍️ Latest Articles</div>
+      <h2 class="section-title reveal">Open Access Insights</h2>
+      <p class="section-sub reveal">Free to read. Practical guidance for anyone building in the Physical AI hardware space.</p>
+      <div class="blog-grid reveal">
+        <div class="blog-card">
+          <div class="blog-thumb">🧠</div>
+          <div class="blog-body">
+            <div class="blog-cat">Technology Trends</div>
+            <div class="blog-title">Edge AI Chips for Physical AI Products: 2026 Buyer's Guide</div>
+            <div class="blog-excerpt">Comparing MediaTek, Qualcomm, and Espressif options for on-device inference in battery-powered hardware. Power vs. performance tradeoffs explained.</div>
+            <div class="blog-meta">May 10, 2026 · 8 min read</div>
+          </div>
+        </div>
+        <div class="blog-card">
+          <div class="blog-thumb">⚖️</div>
+          <div class="blog-body">
+            <div class="blog-cat">Compliance Guide</div>
+            <div class="blog-title">CPSIA 2025 Update: What Changed for AI-Connected Consumer Products</div>
+            <div class="blog-excerpt">The latest amendments to CPSIA significantly impact AI products that collect voice or behavioral data. Here's what you must know before shipping.</div>
+            <div class="blog-meta">Apr 28, 2026 · 12 min read</div>
+          </div>
+        </div>
+        <div class="blog-card">
+          <div class="blog-thumb">🏭</div>
+          <div class="blog-body">
+            <div class="blog-cat">Supply Chain</div>
+            <div class="blog-title">Why Shenzhen is Still the Only Place to Build Hardware Startups</div>
+            <div class="blog-excerpt">Despite geopolitical noise, the Shenzhen supply chain ecosystem has no peers for AI hardware development. The data doesn't lie.</div>
+            <div class="blog-meta">Apr 15, 2026 · 10 min read</div>
+          </div>
+        </div>
+        <div class="blog-card">
+          <div class="blog-thumb">💰</div>
+          <div class="blog-body">
+            <div class="blog-cat">Market Analysis</div>
+            <div class="blog-title">AI-Powered Physical Product Market: $8.2B by 2028 — Who's Winning?</div>
+            <div class="blog-excerpt">A deep-dive into the competitive landscape, key demographics, and the emerging use cases that are driving category expansion.</div>
+            <div class="blog-meta">Mar 30, 2026 · 15 min read</div>
+          </div>
+        </div>
+        <div class="blog-card">
+          <div class="blog-thumb">🔊</div>
+          <div class="blog-body">
+            <div class="blog-cat">Technology</div>
+            <div class="blog-title">Voice AI in Consumer Hardware: Technical Architecture Patterns</div>
+            <div class="blog-excerpt">Three architectural approaches to implementing always-on voice AI in battery-powered hardware, with latency and cost benchmarks.</div>
+            <div class="blog-meta">Mar 12, 2026 · 11 min read</div>
+          </div>
+        </div>
+        <div class="blog-card">
+          <div class="blog-thumb">📦</div>
+          <div class="blog-body">
+            <div class="blog-cat">Operations</div>
+            <div class="blog-title">The Hidden Costs of Hardware Sourcing: What Your Quote Doesn't Show</div>
+            <div class="blog-excerpt">Tooling, QC failures, shipment delays, re-certification fees — the costs that kill AI hardware startup margins are rarely in the initial quote.</div>
+            <div class="blog-meta">Feb 20, 2026 · 9 min read</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reports (Premium) -->
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag reveal">🔒 Premium Intelligence</div>
+      <h2 class="section-title reveal">Subscriber-Only Reports</h2>
+      <p class="section-sub reveal">In-depth analysis for Builder and Partner tier members. Actionable data, not fluff.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;" class="reveal">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);padding:28px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:16px;right:16px;background:rgba(123,97,255,0.15);border:1px solid rgba(123,97,255,0.3);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--accent-purple);font-family:var(--font-head);">Builder+</div>
+          <div style="font-size:32px;margin-bottom:16px;">📊</div>
+          <h3 style="font-size:17px;margin-bottom:8px;">Q1 2026 AI Hardware Market Trends</h3>
+          <p style="font-size:14px;color:var(--text-secondary);">Category revenue breakdown, top-performing SKUs, emerging demographics, and category expansion signals.</p>
+          <a href="#" class="btn btn-outline" style="margin-top:16px;font-size:13px;" onclick="showPage('contact')">Unlock with Builder →</a>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);padding:28px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:16px;right:16px;background:rgba(123,97,255,0.15);border:1px solid rgba(123,97,255,0.3);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--accent-purple);font-family:var(--font-head);">Builder+</div>
+          <div style="font-size:32px;margin-bottom:16px;">🔍</div>
+          <h3 style="font-size:17px;margin-bottom:8px;">Competitive Teardown: LeapFrog AI vs Sphero</h3>
+          <p style="font-size:14px;color:var(--text-secondary);">Component-level BOM estimation, AI architecture analysis, margin modeling, and positioning gaps.</p>
+          <a href="#" class="btn btn-outline" style="margin-top:16px;font-size:13px;" onclick="showPage('contact')">Unlock with Builder →</a>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);padding:28px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:16px;right:16px;background:rgba(0,212,255,0.12);border:1px solid rgba(0,212,255,0.25);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--accent-blue);font-family:var(--font-head);">Partner Only</div>
+          <div style="font-size:32px;margin-bottom:16px;">💰</div>
+          <h3 style="font-size:17px;margin-bottom:8px;">AI Hardware Cost Structure White Paper</h3>
+          <p style="font-size:14px;color:var(--text-secondary);">True cost-of-goods breakdown, factory negotiation benchmarks, and margin optimization playbook.</p>
+          <a href="#" class="btn btn-outline" style="margin-top:16px;font-size:13px;" onclick="showPage('contact')">Partner Access →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-insights -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+  PAGE: ABOUT
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-about">
+  <div style="padding-top:72px;"></div>
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
+        <div>
+          <div class="tag">🏢 About McGlobal</div>
+          <h1 style="margin-bottom:24px;">Built by Someone Who<br/>Learned the Hard Way</h1>
+          <p style="font-size:17px;line-height:1.75;margin-bottom:20px;">After 10 years building cross-border trade relationships across Shenzhen's manufacturing ecosystem, I saw the same pattern repeat: international brands with great ideas, burning through capital trying to navigate a supply chain that takes years to understand from the outside.</p>
+          <p style="font-size:17px;line-height:1.75;margin-bottom:20px;">McGlobal exists to give ambitious brands an unfair advantage — day-one access to a decade of factory relationships, technical expertise, and hard-won process knowledge.</p>
+          <p style="font-size:17px;line-height:1.75;">We're not a manufacturer. We're not an agency. We're your R&D partner — the team you'd hire if you could afford to build it yourself.</p>
+        </div>
+        <div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);padding:40px;text-align:center;">
+            <div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:48px;">👨‍💼</div>
+            <div style="font-family:var(--font-head);font-size:24px;font-weight:700;margin-bottom:4px;">Simon</div>
+            <div style="color:var(--accent-blue);font-weight:600;margin-bottom:16px;">Founder & CEO</div>
+            <div style="display:flex;flex-direction:column;gap:10px;text-align:left;margin-top:24px;">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:14px;">
+                <span>🏭</span><span>10+ Years Shenzhen Supply Chain</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:14px;">
+                <span>🌏</span><span>Cross-border Trade Expert</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:14px;">
+                <span>🤖</span><span>AI Hardware Enthusiast</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:14px;">
+                <span>🎪</span><span>CES, Toy Fair NY Attendee</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Capabilities -->
+  <section class="section">
+    <div class="container">
+      <div class="tag reveal">💪 Core Competencies</div>
+      <h2 class="section-title reveal">What We're Built For</h2>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:48px;" class="reveal">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">🏭</div>
+          <div style="font-family:var(--font-head);font-weight:600;font-size:13px;line-height:1.4;">Supply Chain Management</div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">⚙️</div>
+          <div style="font-family:var(--font-head);font-weight:600;font-size:13px;line-height:1.4;">Hardware Engineering</div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">🧠</div>
+          <div style="font-family:var(--font-head);font-weight:600;font-size:13px;line-height:1.4;">AI Integration</div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">✅</div>
+          <div style="font-family:var(--font-head);font-weight:600;font-size:13px;line-height:1.4;">Quality Control</div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">🛡️</div>
+          <div style="font-family:var(--font-head);font-weight:600;font-size:13px;line-height:1.4;">Compliance & Certification</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trade Show Timeline -->
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag reveal">🎪 Industry Presence</div>
+      <h2 class="section-title reveal">Where We Show Up</h2>
+      <div style="display:flex;flex-direction:column;gap:0;max-width:700px;margin-top:48px;" class="reveal">
+        <div style="display:flex;gap:24px;padding-bottom:32px;border-left:2px solid var(--border-glow);padding-left:24px;position:relative;">
+          <div style="position:absolute;left:-7px;top:0;width:12px;height:12px;border-radius:50%;background:var(--accent-blue);box-shadow:0 0 12px var(--accent-blue);"></div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-head);font-size:13px;color:var(--accent-blue);font-weight:700;margin-bottom:4px;">Jan 2026</div>
+            <div style="font-family:var(--font-head);font-weight:600;font-size:17px;margin-bottom:4px;">CES 2026 — Las Vegas</div>
+            <div style="font-size:14px;color:var(--text-secondary);">AI + Robotics Hall. Showcased three concept prototypes, conducted 40+ client discovery conversations.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;padding-bottom:32px;border-left:2px solid var(--border-glow);padding-left:24px;position:relative;">
+          <div style="position:absolute;left:-7px;top:0;width:12px;height:12px;border-radius:50%;background:var(--accent-purple);box-shadow:0 0 12px var(--accent-purple);"></div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-head);font-size:13px;color:var(--accent-purple);font-weight:700;margin-bottom:4px;">Feb 2026</div>
+            <div style="font-family:var(--font-head);font-weight:600;font-size:17px;margin-bottom:4px;">Tech & Hardware Events, Asia & North America 2026</div>
+            <div style="font-size:14px;color:var(--text-secondary);">CES, Hong Kong Electronics Fair, COMPUTEX attendee. Scouting emerging AI hardware suppliers and understanding global market demand firsthand.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;padding-bottom:32px;border-left:2px dashed var(--border);padding-left:24px;position:relative;opacity:0.6;">
+          <div style="position:absolute;left:-7px;top:0;width:12px;height:12px;border-radius:50%;background:var(--text-muted);"></div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-head);font-size:13px;color:var(--text-muted);font-weight:700;margin-bottom:4px;">Jun 2026 — Upcoming</div>
+            <div style="font-family:var(--font-head);font-weight:600;font-size:17px;margin-bottom:4px;">Licensing Expo 2026 — Las Vegas</div>
+            <div style="font-size:14px;color:var(--text-secondary);">Meeting IP licensors and brand holders exploring AI-enabled hardware product lines.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-about -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+  PAGE: COMPLIANCE
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-compliance">
+  <div style="padding-top:72px;"></div>
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag">🛡️ Compliance & Safety</div>
+      <h1 style="max-width:680px;margin-bottom:20px;">North American Compliance<br/>Is Not Optional</h1>
+      <p style="font-size:18px;color:var(--text-secondary);max-width:600px;">Every project we touch is designed with North American regulatory requirements as a first-class constraint, not an afterthought.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="tag reveal">📋 Certifications We Support</div>
+      <h2 class="section-title reveal">Our Compliance Coverage</h2>
+      <div class="compliance-grid reveal">
+        <div class="compliance-card">
+          <div class="compliance-icon">📡</div>
+          <div class="compliance-name">FCC</div>
+          <div class="compliance-full">Federal Communications Commission</div>
+          <div class="compliance-desc">Required for any product with radio-frequency components (WiFi, Bluetooth, cellular). We design RF architectures that pass FCC Part 15 and coordinate with accredited test labs.</div>
+        </div>
+        <div class="compliance-card">
+          <div class="compliance-icon">🧒</div>
+          <div class="compliance-name">CPSIA</div>
+          <div class="compliance-full">Consumer Product Safety Improvement Act</div>
+          <div class="compliance-desc">Governs lead content limits, phthalates, and children's product testing requirements. We maintain Children's Product Certificate (CPC) documentation for every project.</div>
+        </div>
+        <div class="compliance-card">
+          <div class="compliance-icon">🔬</div>
+          <div class="compliance-name">ASTM F963</div>
+          <div class="compliance-full">Standard Consumer Safety Specification for Toy Safety</div>
+          <div class="compliance-desc">The comprehensive US toy safety standard covering mechanical, electrical, flammability, and chemical hazards. Our prototype QC process includes pre-compliance ASTM F963 checks.</div>
+        </div>
+        <div class="compliance-card">
+          <div class="compliance-icon">⚗️</div>
+          <div class="compliance-name">CA Prop 65</div>
+          <div class="compliance-full">California Safe Drinking Water and Toxic Enforcement Act</div>
+          <div class="compliance-desc">Requires disclosure of chemicals known to cause cancer or reproductive toxicity. We source compliant materials and manage labeling requirements for California-bound products.</div>
+        </div>
+        <div class="compliance-card">
+          <div class="compliance-icon">🍁</div>
+          <div class="compliance-name">CCPSA</div>
+          <div class="compliance-full">Canada Consumer Product Safety Act</div>
+          <div class="compliance-desc">Canada's federal product safety legislation, including SOR/2011-17 Toys Regulations. We support dual-certification paths for brands targeting both US and Canadian markets.</div>
+        </div>
+        <div class="compliance-card">
+          <div class="compliance-icon">🔐</div>
+          <div class="compliance-name">COPPA</div>
+          <div class="compliance-full">Children's Online Privacy Protection Act</div>
+          <div class="compliance-desc">Critical for any AI product that collects voice, behavioral, or location data from children under 13. We advise on data architecture, consent flows, and parental control mechanisms.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Security -->
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag reveal">🔒 Data Protection</div>
+      <h2 class="section-title reveal">Your IP Is Safe With Us</h2>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:48px;" class="reveal">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);padding:32px;">
+          <div style="font-size:32px;margin-bottom:16px;">📄</div>
+          <h3 style="margin-bottom:12px;">NDA Framework</h3>
+          <p style="font-size:14px;line-height:1.7;">All engagements begin with a mutual NDA executed via DocuSign. Key provisions cover: design files, supplier information, pricing data, and project communications. High-value breach penalties enforced in client-favorable jurisdictions.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);padding:32px;">
+          <div style="font-size:32px;margin-bottom:16px;">🖋️</div>
+          <h3 style="margin-bottom:12px;">Dynamic Watermarking</h3>
+          <p style="font-size:14px;line-height:1.7;">Every document delivered contains embedded dynamic watermarks including your company name, user ID, and timestamp. Visible and invisible watermarking layers provide a full evidence chain if documents are shared without authorization.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);padding:32px;">
+          <div style="font-size:32px;margin-bottom:16px;">🏛️</div>
+          <h3 style="margin-bottom:12px;">Read-Only Document Vault</h3>
+          <p style="font-size:14px;line-height:1.7;">Sensitive documents are accessible only in our secure online viewer — no download, no print, no copy. Access logs record every interaction. Anomalous activity triggers automated alerts.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-card);padding:32px;">
+          <div style="font-size:32px;margin-bottom:16px;">🌐</div>
+          <h3 style="margin-bottom:12px;">Supplier Information Protection</h3>
+          <p style="font-size:14px;line-height:1.7;">Factory identities are never disclosed directly to clients. We act as permanent intermediary, maintaining confidentiality of our supply chain network while delivering the output you need.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-compliance -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+  PAGE: FAQ
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-faq">
+  <div style="padding-top:72px;"></div>
+  <section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag">❓ FAQ</div>
+      <h1 style="max-width:680px;margin-bottom:20px;">Questions We Hear<br/>Every Week</h1>
+      <p style="font-size:18px;color:var(--text-secondary);max-width:600px;">Direct answers, no marketing fluff. If your question isn't here, book a free call.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="faq-tabs" id="faqTabs">
+        <button class="faq-tab active" onclick="filterFaq('service')">Service Model</button>
+        <button class="faq-tab" onclick="filterFaq('tech')">Technical</button>
+        <button class="faq-tab" onclick="filterFaq('ip')">IP & Legal</button>
+        <button class="faq-tab" onclick="filterFaq('compliance')">Compliance</button>
+        <button class="faq-tab" onclick="filterFaq('process')">Process</button>
+      </div>
+      <div class="faq-list" id="faqList">
+
+        <!-- Service -->
+        <div class="faq-item" data-cat="service">
+          <div class="faq-question" onclick="toggleFaq(this)">How does the subscription model actually work? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">You subscribe to a tier (Explorer, Builder, or Partner), sign our service agreement via DocuSign, and wire transfer the first payment. Within 48 hours, you're matched with a project manager and given access to the platform. Subscription renews quarterly (Explorer) or annually (Builder/Partner). No auto-billing — you receive an invoice before each renewal.</div>
+        </div>
+        <div class="faq-item" data-cat="service">
+          <div class="faq-question" onclick="toggleFaq(this)">What is the minimum commitment period? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">Explorer is quarter-by-quarter (no annual lock-in). Builder and Partner require an annual commitment because prototyping cycles inherently span multiple months. We don't believe in trapping clients — if you're unhappy after 90 days, we'll discuss a resolution.</div>
+        </div>
+        <div class="faq-item" data-cat="service">
+          <div class="faq-question" onclick="toggleFaq(this)">What does the cancellation policy look like? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">Explorer: Cancel before the next quarter renews, no penalty. Builder/Partner: 60-day written notice required before annual renewal date. Projects already in progress continue until the current milestone. All completed deliverables remain yours.</div>
+        </div>
+        <div class="faq-item" data-cat="service">
+          <div class="faq-question" onclick="toggleFaq(this)">Is there a free trial? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">We offer a free 30-minute discovery consultation (book via Calendly on the Contact page). This isn't a sales call — it's a genuine assessment of whether we're a fit. We'll tell you honestly if your project isn't right for our service.</div>
+        </div>
+
+        <!-- Tech -->
+        <div class="faq-item" data-cat="tech" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">What AI capabilities can you integrate into a physical product? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">Voice interaction (ASR/TTS with custom wake words), vision-based recognition (object, face, gesture), LLM-powered conversation engines, emotion detection, adaptive behavior trees, and on-device edge AI inference. We work with standard platforms (ESP32, Qualcomm, MediaTek) as well as custom PCB designs.</div>
+        </div>
+        <div class="faq-item" data-cat="tech" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">What's the realistic minimum order quantity for production? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">Prototyping phase: 1–5 units. Small batch trial production: typically 500–1,000 units depending on component complexity. Mass production: 5,000+ units for most AI hardware product categories. We're transparent about MOQ requirements upfront based on your specific BOM.</div>
+        </div>
+        <div class="faq-item" data-cat="tech" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">Can you really deliver a working prototype in 60 days? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">For projects in scope: yes. The 60-day target applies to Builder and Partner tier projects where the brief is clear and components are in stock. Complex projects (custom PCB from scratch, novel AI architectures, moving parts) typically take 10–12 weeks. We'll give you a specific timeline after the discovery call, not a marketing promise.</div>
+        </div>
+
+        <!-- IP -->
+        <div class="faq-item" data-cat="ip" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">Who owns the intellectual property we develop together? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">By default: you own everything we create for your project — designs, firmware, documentation. We retain no license to use your project deliverables for other clients. The exception is generic reusable modules (standard code libraries, generic mechanical components) that we've developed independently — these remain ours but you receive a perpetual license to use them in your products.</div>
+        </div>
+        <div class="faq-item" data-cat="ip" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">Can you work with competitors in the same product category simultaneously? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">Partner tier clients can negotiate exclusive category protection in specific geographic markets — this is a defined add-on option. Builder and Explorer tier clients do not receive exclusivity. We maintain strict information separation between client projects regardless of tier.</div>
+        </div>
+        <div class="faq-item" data-cat="ip" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">How do you protect our design files and confidential information? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">Multiple layers: mutual NDA with high breach penalties, encrypted document storage, dynamic watermarking on every deliverable (including invisible steganographic marks), read-only document access vault for sensitive files, full access logging, and device-bound login for platform access. Supplier identities are never disclosed — we act as permanent intermediary.</div>
+        </div>
+
+        <!-- Compliance -->
+        <div class="faq-item" data-cat="compliance" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">Which certifications do you support? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">FCC (radio frequency), CPSIA (children's product safety), ASTM F963 (toy safety standard), California Prop 65, CCPSA (Canada), and COPPA (data privacy for children under 13). We design products with certification requirements as upfront constraints, coordinate with accredited third-party labs, and manage the certification documentation process.</div>
+        </div>
+        <div class="faq-item" data-cat="compliance" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">How long does FCC certification take and who pays? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">FCC testing typically takes 4–8 weeks through an accredited lab. Test lab fees are a pass-through cost (not included in subscription). We recommend budgeting $3,000–$8,000 depending on the number of radio modules. We coordinate the submission and manage the lab relationship on your behalf.</div>
+        </div>
+
+        <!-- Process -->
+        <div class="faq-item" data-cat="process" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">What's the exact process from first contact to project kickoff? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">① Book free 30-min consultation (Calendly) → ② Zoom discovery call → ③ We send a written scope and pricing proposal within 5 business days → ④ You review, negotiate if needed → ⑤ DocuSign the service agreement → ⑥ Wire transfer → ⑦ Platform access granted within 48 hours → ⑧ PM introduces themselves and schedules the project kickoff call.</div>
+        </div>
+        <div class="faq-item" data-cat="process" style="display:none;">
+          <div class="faq-question" onclick="toggleFaq(this)">How do I communicate with my project team during development? <span class="faq-arrow">↓</span></div>
+          <div class="faq-answer">Builder+ tiers: through the project dashboard with threaded discussions, milestone tracking, and file exchange. Partner tier: additionally via a dedicated Slack channel with 7×24 response commitment. All communication is logged and archived for your reference and ours.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div><!-- /page-faq -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+  PAGE: CONTACT
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-contact">
+  <div style="padding-top:72px;" id="contact-section"></div>
+  <section id="contact" class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+      <div class="tag">📬 Contact</div>
+      <h1 style="max-width:580px;margin-bottom:16px;">Let's Find Out If<br/>We're the Right Fit</h1>
+      <p style="font-size:17px;color:var(--text-secondary);max-width:520px;margin-bottom:60px;">We only take clients we can genuinely help. Tell us about your project and we'll tell you honestly whether we're a match.</p>
+
+      <div class="contact-grid">
+        <!-- Form -->
+        <div class="contact-form">
+          <h3 style="margin-bottom:6px;">Submit Your Project Brief</h3>
+          <p style="font-size:14px;margin-bottom:28px;">For enterprise inquiries only. We respond within 1 business day.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Company Name *</label>
+              <input type="text" class="form-input" placeholder="Acme Corp Inc." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Company Website *</label>
+              <input type="url" class="form-input" placeholder="https://acmecorp.com" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Your Name *</label>
+              <input type="text" class="form-input" placeholder="Jane Smith" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Job Title *</label>
+              <input type="text" class="form-input" placeholder="VP of Product" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Business Email *</label>
+            <input type="email" class="form-input" placeholder="jane@acmecorp.com" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Project Stage</label>
+              <select class="form-select">
+                <option value="">Select stage...</option>
+                <option>Early concept — just an idea</option>
+                <option>Concept defined — need execution</option>
+                <option>Have existing design — need supply chain</option>
+                <option>In production — need iteration partner</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Launch</label>
+              <select class="form-select">
+                <option value="">Select timeline...</option>
+                <option>Under 6 months</option>
+                <option>6–12 months</option>
+                <option>12–18 months</option>
+                <option>Flexible / exploring</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Annual Budget Range</label>
+              <select class="form-select">
+                <option value="">Select range...</option>
+                <option>$10K–$25K</option>
+                <option>$25K–$100K</option>
+                <option>$100K–$500K</option>
+                <option>$500K+</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estimated Annual Volume</label>
+              <select class="form-select">
+                <option value="">Select volume...</option>
+                <option>Under 1,000 units</option>
+                <option>1,000–10,000 units</option>
+                <option>10,000–100,000 units</option>
+                <option>100,000+ units</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tell us about your project</label>
+            <textarea class="form-textarea" placeholder="What kind of AI-powered physical product are you looking to build? What makes it unique? What's your biggest challenge right now?"></textarea>
+          </div>
+          <button class="btn btn-primary form-submit" onclick="submitForm(event)">
+            Send Project Brief →
+          </button>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:12px;text-align:center;">We only work with enterprise clients. Individual requests will not receive a response.</p>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="contact-info">
+          <div class="contact-calendly">
+            <div class="calendly-icon">📅</div>
+            <h3 style="margin-bottom:10px;">Book a Free 30-Min Call</h3>
+            <p style="font-size:14px;margin-bottom:20px;">No agenda, no pitch. Just a real conversation about your project.</p>
+            <a href="https://calendly.com" target="_blank" class="btn btn-primary" style="width:100%;justify-content:center;">Open Calendly →</a>
+          </div>
+          <div class="contact-info-items">
+            <div class="contact-info-item">
+              <div class="contact-info-icon">✉️</div>
+              <div>
+                <div class="contact-info-title">Business Email</div>
+                <div class="contact-info-val">hello@mcglobal.cc</div>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">💼</div>
+              <div>
+                <div class="contact-info-title">LinkedIn</div>
+                <div class="contact-info-val">linkedin.com/company/mcglobal</div>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">🕐</div>
+              <div>
+                <div class="contact-info-title">Response Times</div>
+                <div class="contact-info-val">Explorer: 2 business days<br/>Builder: 24 hours (PST/EST)<br/>Partner: 7×24 via Slack</div>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">📍</div>
+              <div>
+                <div class="contact-info-title">Operations Base</div>
+                <div class="contact-info-val">Shenzhen, China<br/>Client timezone: US/Canada PST–EST</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-contact -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+  FOOTER (shared)
+══════════════════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo">
+          <div class="nav-logo-dot"></div>
+          McGlobal
+        </div>
+        <p>Your outsourced Physical AI R&D department. From concept to prototype in 60 days. Serving global enterprise clients.</p>
+        <div style="display:flex;gap:12px;margin-top:20px;">
+          <a href="#" style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent-blue)'" onmouseout="this.style.borderColor='var(--border)'">💼</a>
+          <a href="#" style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent-blue)'" onmouseout="this.style.borderColor='var(--border)'">✉️</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Services</div>
+        <ul class="footer-links">
+          <li><a href="#" onclick="showPage('services')">Explorer Tier</a></li>
+          <li><a href="#" onclick="showPage('services')">Builder Tier</a></li>
+          <li><a href="#" onclick="showPage('services')">Partner Tier</a></li>
+          <li><a href="#" onclick="showPage('services')">How It Works</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Resources</div>
+        <ul class="footer-links">
+          <li><a href="#" onclick="showPage('insights')">Industry Insights</a></li>
+          <li><a href="#" onclick="downloadReport()">Free Market Report</a></li>
+          <li><a href="#" onclick="showPage('portfolio')">Portfolio</a></li>
+          <li><a href="#" onclick="showPage('compliance')">Compliance</a></li>
+          <li><a href="#" onclick="showPage('faq')">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Company</div>
+        <ul class="footer-links">
+          <li><a href="#" onclick="showPage('about')">About Us</a></li>
+          <li><a href="#" onclick="showPage('contact')">Contact</a></li>
+          <li><a href="#" onclick="showPage('contact')">Book Consultation</a></li>
+          <li><a href="#">Newsletter</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 McGlobal — A service of <strong style="color:var(--text-secondary)">Million Chan Corp. Ltd.</strong> All rights reserved. Enterprise clients only.</div>
+      <div class="footer-legal">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">NDA Framework</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════════════════════════════════════════
+  JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+// ──────────────────────────────────────────
+// Page Router
+// ──────────────────────────────────────────
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + pageId);
+  if (target) {
+    target.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    initReveal();
+    if (pageId === 'home') initCounters();
+  }
+}
+
+function toggleMobileMenu() {
+  const mn = document.getElementById('mobile-nav');
+  mn.style.display = mn.style.display === 'flex' ? 'none' : 'flex';
+}
+
+// ──────────────────────────────────────────
+// Hero Three.js 3D Scene
+// ──────────────────────────────────────────
+(function initHero() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas || typeof THREE === 'undefined') return;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 8);
+
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0x1a1a2e, 2);
+  scene.add(ambientLight);
+  const blueLight = new THREE.PointLight(0x00D4FF, 8, 30);
+  blueLight.position.set(4, 3, 5);
+  scene.add(blueLight);
+  const purpleLight = new THREE.PointLight(0x7B61FF, 6, 25);
+  purpleLight.position.set(-4, -2, 4);
+  scene.add(purpleLight);
+  const fillLight = new THREE.PointLight(0x001133, 3, 20);
+  fillLight.position.set(0, -5, -2);
+  scene.add(fillLight);
+
+  // Robot Body Parts
+  const group = new THREE.Group();
+
+  // Head
+  const headGeo = new THREE.SphereGeometry(1.0, 32, 32);
+  const headMat = new THREE.MeshPhongMaterial({
+    color: 0x1a1a2e, shininess: 120,
+    emissive: 0x000d1a, specular: 0x00D4FF
+  });
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.set(0, 1.5, 0);
+  group.add(head);
+
+  // Eyes (glowing)
+  const eyeGeo = new THREE.SphereGeometry(0.18, 16, 16);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF });
+  const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+  leftEye.position.set(-0.35, 1.65, 0.9);
+  group.add(leftEye);
+  const rightEye = new THREE.Mesh(eyeGeo, eyeMat.clone());
+  rightEye.position.set(0.35, 1.65, 0.9);
+  group.add(rightEye);
+
+  // Mouth arc
+  const mouthCurve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(-0.3, 1.1, 0.96),
+    new THREE.Vector3(0, 0.95, 1.02),
+    new THREE.Vector3(0.3, 1.1, 0.96)
+  );
+  const mouthPoints = mouthCurve.getPoints(20);
+  const mouthGeo = new THREE.BufferGeometry().setFromPoints(mouthPoints);
+  const mouthMat = new THREE.LineBasicMaterial({ color: 0x00D4FF });
+  const mouth = new THREE.Line(mouthGeo, mouthMat);
+  group.add(mouth);
+
+  // Body
+  const bodyGeo = new THREE.CylinderGeometry(0.75, 0.85, 1.8, 32);
+  const bodyMat = new THREE.MeshPhongMaterial({
+    color: 0x121228, shininess: 80, specular: 0x7B61FF, emissive: 0x05050f
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.set(0, 0, 0);
+  group.add(body);
+
+  // Chest glowing panel
+  const chestGeo = new THREE.PlaneGeometry(0.8, 0.5);
+  const chestMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.15 });
+  const chest = new THREE.Mesh(chestGeo, chestMat);
+  chest.position.set(0, 0.3, 0.86);
+  group.add(chest);
+
+  // Arms
+  const armGeo = new THREE.CylinderGeometry(0.22, 0.22, 1.0, 16);
+  const armMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 100, specular: 0x00D4FF });
+  const leftArm = new THREE.Mesh(armGeo, armMat);
+  leftArm.position.set(-1.05, 0.1, 0);
+  leftArm.rotation.z = 0.3;
+  group.add(leftArm);
+  const rightArm = new THREE.Mesh(armGeo, armMat.clone());
+  rightArm.position.set(1.05, 0.1, 0);
+  rightArm.rotation.z = -0.3;
+  group.add(rightArm);
+
+  // Legs
+  const legGeo = new THREE.CylinderGeometry(0.25, 0.2, 1.0, 16);
+  const legMat = new THREE.MeshPhongMaterial({ color: 0x111122, shininess: 90 });
+  const leftLeg = new THREE.Mesh(legGeo, legMat);
+  leftLeg.position.set(-0.3, -1.4, 0);
+  group.add(leftLeg);
+  const rightLeg = new THREE.Mesh(legGeo, legMat.clone());
+  rightLeg.position.set(0.3, -1.4, 0);
+  group.add(rightLeg);
+
+  // Antenna
+  const antGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8);
+  const antMat = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+  const antenna = new THREE.Mesh(antGeo, antMat);
+  antenna.position.set(0, 2.75, 0);
+  group.add(antenna);
+  const antTopGeo = new THREE.SphereGeometry(0.1, 12, 12);
+  const antTopMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF });
+  const antTop = new THREE.Mesh(antTopGeo, antTopMat);
+  antTop.position.set(0, 3.05, 0);
+  group.add(antTop);
+
+  group.position.set(3, -0.3, 0);
+  scene.add(group);
+
+  // Orbital rings
+  const rings = [];
+  const ringData = [
+    { r: 2.8, speed: 0.6, tilt: 0.3, color: 0x00D4FF },
+    { r: 3.5, speed: -0.4, tilt: -0.5, color: 0x7B61FF },
+    { r: 4.2, speed: 0.25, tilt: 0.8, color: 0x00D4FF },
+  ];
+  ringData.forEach(rd => {
+    const ringGeo = new THREE.TorusGeometry(rd.r, 0.02, 8, 120);
+    const ringMat = new THREE.MeshBasicMaterial({ color: rd.color, transparent: true, opacity: 0.35 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = rd.tilt;
+    ring.userData = { speed: rd.speed, tilt: rd.tilt };
+    group.add(ring);
+    rings.push(ring);
+  });
+
+  // Floating particles
+  const particles = [];
+  const particleGeo = new THREE.SphereGeometry(0.05, 8, 8);
+  for (let i = 0; i < 24; i++) {
+    const angle = (i / 24) * Math.PI * 2;
+    const radius = 2.5 + Math.random() * 2;
+    const pMat = new THREE.MeshBasicMaterial({
+      color: i % 2 === 0 ? 0x00D4FF : 0x7B61FF,
+      transparent: true, opacity: 0.7
+    });
+    const p = new THREE.Mesh(particleGeo, pMat);
+    p.position.set(Math.cos(angle) * radius, (Math.random() - 0.5) * 4, Math.sin(angle) * radius * 0.5);
+    p.userData = { angle, radius, speed: 0.2 + Math.random() * 0.4, yOffset: p.position.y };
+    group.add(p);
+    particles.push(p);
+  }
+
+  // Mouse parallax
+  let mouseX = 0, mouseY = 0;
+  document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.012;
+
+    // Idle bob
+    group.position.y = -0.3 + Math.sin(t * 0.8) * 0.08;
+
+    // Mouse parallax
+    group.rotation.y += (mouseX * 0.3 - group.rotation.y) * 0.04;
+    group.rotation.x += (-mouseY * 0.15 - group.rotation.x) * 0.04;
+
+    // Rings rotation
+    rings.forEach((ring, i) => {
+      ring.rotation.z += ring.userData.speed * 0.008;
+    });
+
+    // Particles orbit
+    particles.forEach(p => {
+      p.userData.angle += p.userData.speed * 0.008;
+      const a = p.userData.angle;
+      const r = p.userData.radius;
+      p.position.x = Math.cos(a) * r;
+      p.position.z = Math.sin(a) * r * 0.6;
+      p.position.y = p.userData.yOffset + Math.sin(a * 2 + t) * 0.3;
+    });
+
+    // Eye glow pulse
+    const eyePulse = 0.6 + Math.sin(t * 3) * 0.4;
+    leftEye.material.color.setRGB(0, eyePulse, 1);
+    rightEye.material.color.setRGB(0, eyePulse, 1);
+    antTop.material.color.setRGB(0, eyePulse, 1);
+
+    // Chest pulse
+    chest.material.opacity = 0.08 + Math.sin(t * 2) * 0.07;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+// ──────────────────────────────────────────
+// Scroll Reveal
+// ──────────────────────────────────────────
+function initReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => observer.observe(el));
+}
+
+// ──────────────────────────────────────────
+// Counter Animation
+// ──────────────────────────────────────────
+function initCounters() {
+  const counters = document.querySelectorAll('.counter');
+  counters.forEach(counter => {
+    const target = parseInt(counter.getAttribute('data-target'));
+    const duration = 1800;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { current = target; clearInterval(timer); }
+      counter.textContent = Math.floor(current);
+    }, 16);
+  });
+
+  // Hero stat counters
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.getAttribute('data-count'));
+    const suffix = el.getAttribute('data-suffix') || '';
+    let current = 0;
+    const step = target / 60;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { current = target; clearInterval(timer); }
+      el.textContent = Math.floor(current) + suffix;
+    }, 16);
+  });
+}
+
+// ──────────────────────────────────────────
+// Process nodes
+// ──────────────────────────────────────────
+function toggleProcess(node) {
+  const wasActive = node.classList.contains('active');
+  document.querySelectorAll('.process-node').forEach(n => n.classList.remove('active'));
+  if (!wasActive) node.classList.add('active');
+}
+
+// ──────────────────────────────────────────
+// FAQ
+// ──────────────────────────────────────────
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
+
+function filterFaq(cat) {
+  document.querySelectorAll('.faq-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.style.display = item.getAttribute('data-cat') === cat ? 'block' : 'none';
+    item.classList.remove('open');
+  });
+}
+
+// ──────────────────────────────────────────
+// Form & Download
+// ──────────────────────────────────────────
+function submitForm(e) {
+  e.preventDefault();
+  const btn = e.target;
+  btn.textContent = '✓ Brief Received!';
+  btn.style.background = '#00aa55';
+  btn.style.pointerEvents = 'none';
+  setTimeout(() => {
+    btn.textContent = 'Send Project Brief →';
+    btn.style.background = '';
+    btn.style.pointerEvents = '';
+  }, 3000);
+}
+
+function downloadReport() {
+  const modal = document.createElement('div');
+  modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);`;
+  modal.innerHTML = `
+    <div style="background:#141414;border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:48px;max-width:440px;width:90%;text-align:center;">
+      <div style="font-size:48px;margin-bottom:16px;">📄</div>
+      <h3 style="font-family:var(--font-head);font-size:22px;margin-bottom:10px;">Physical AI Market Entry Guide 2026</h3>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:28px;">Enter your business email to receive the full 40-page guide — market sizing, regulatory overview, supply chain map, and 60-day launch framework for AI-powered physical products.</p>
+      <input type="email" id="dl-email" placeholder="your@company.com" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:15px;padding:12px 16px;outline:none;margin-bottom:16px;">
+      <button onclick="completeDownload()" style="width:100%;background:var(--accent-blue);color:#000;border:none;border-radius:8px;padding:14px;font-family:var(--font-head);font-size:15px;font-weight:700;cursor:pointer;">Send Me the Guide →</button>
+      <button onclick="this.closest('[style]').remove()" style="background:none;border:none;color:var(--text-secondary);font-size:13px;margin-top:12px;cursor:pointer;">No thanks</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function completeDownload() {
+  const emailEl = document.getElementById('dl-email');
+  if (!emailEl || !emailEl.value.includes('@')) {
+    emailEl.style.borderColor = '#ff4444';
+    return;
+  }
+  const modal = emailEl.closest('[style]');
+  modal.innerHTML = `<div style="background:#141414;border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:48px;max-width:440px;width:90%;text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">✅</div>
+    <h3 style="font-family:var(--font-head);font-size:20px;margin-bottom:10px;">Guide on its way!</h3>
+    <p style="font-size:14px;color:var(--text-secondary);">Check your inbox within the next few minutes. You'll also receive our monthly market brief going forward.</p>
+    <button onclick="this.closest('[style]').remove()" style="background:var(--accent-blue);color:#000;border:none;border-radius:8px;padding:12px 28px;font-family:var(--font-head);font-size:14px;font-weight:700;cursor:pointer;margin-top:24px;">Close</button>
+  </div>`;
+}
+
+// ──────────────────────────────────────────
+// Counter observer for stats section
+// ──────────────────────────────────────────
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      initCounters();
+      statsObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.5 });
+const statsEl = document.getElementById('stats');
+if (statsEl) statsObserver.observe(statsEl);
+
+// ──────────────────────────────────────────
+// Init on load
+// ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initReveal();
+  initCounters();
+});
+
+// Scroll handler for navbar
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 40) {
+    nav.style.background = 'rgba(5,5,5,0.95)';
+  } else {
+    nav.style.background = 'rgba(10,10,10,0.7)';
+  }
+});
+</script>
+</body>
+</html>

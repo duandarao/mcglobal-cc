@@ -170,6 +170,12 @@
       display: flex; align-items: center;
       overflow: hidden;
     }
+    #hero-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
+    }
     #hero-bg {
       position: absolute; inset: 0;
       overflow: hidden;
@@ -763,6 +769,7 @@
 
   <!-- HERO -->
   <section id="hero">
+    <canvas id="hero-canvas"></canvas>
     <div id="hero-bg"></div>
     <div id="hero-grid"></div>
     <div id="hero-glow-1"></div>
@@ -1980,188 +1987,207 @@ function toggleMobileMenu() {
 }
 
 // ──────────────────────────────────────────
-// Three.js 3D Background Animation
+// Hero Three.js 3D Scene
 // ──────────────────────────────────────────
-(function initThreeJS() {
-  if (typeof THREE === 'undefined') return;
-  
-  const container = document.getElementById('hero');
-  if (!container) return;
-  
-  // Scene setup
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  
-  renderer.setSize(window.innerWidth, window.innerHeight);
+(function initHero() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas || typeof THREE === 'undefined') return;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  container.appendChild(renderer.domElement);
-  renderer.domElement.style.position = 'absolute';
-  renderer.domElement.style.top = '0';
-  renderer.domElement.style.left = '0';
-  renderer.domElement.style.zIndex = '1';
-  renderer.domElement.style.pointerEvents = 'none';
-  
-  // Robot figure (simplified humanoid)
-  const robotGroup = new THREE.Group();
-  
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 8);
+
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0x1a1a2e, 2);
+  scene.add(ambientLight);
+  const blueLight = new THREE.PointLight(0x00D4FF, 8, 30);
+  blueLight.position.set(4, 3, 5);
+  scene.add(blueLight);
+  const purpleLight = new THREE.PointLight(0x7B61FF, 6, 25);
+  purpleLight.position.set(-4, -2, 4);
+  scene.add(purpleLight);
+  const fillLight = new THREE.PointLight(0x001133, 3, 20);
+  fillLight.position.set(0, -5, -2);
+  scene.add(fillLight);
+
+  // Robot Body Parts
+  const group = new THREE.Group();
+
   // Head
-  const headGeo = new THREE.BoxGeometry(1.2, 1.4, 1);
-  const headMat = new THREE.MeshPhongMaterial({ 
-    color: 0x1a1a2e,
-    emissive: 0x00D4FF,
-    emissiveIntensity: 0.3,
-    shininess: 100
+  const headGeo = new THREE.SphereGeometry(1.0, 32, 32);
+  const headMat = new THREE.MeshPhongMaterial({
+    color: 0x1a1a2e, shininess: 120,
+    emissive: 0x000d1a, specular: 0x00D4FF
   });
   const head = new THREE.Mesh(headGeo, headMat);
-  head.position.y = 3.5;
-  robotGroup.add(head);
-  
+  head.position.set(0, 1.5, 0);
+  group.add(head);
+
   // Eyes (glowing)
-  const eyeGeo = new THREE.SphereGeometry(0.15, 16, 16);
+  const eyeGeo = new THREE.SphereGeometry(0.18, 16, 16);
   const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF });
   const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-  leftEye.position.set(-0.3, 3.6, 0.5);
-  robotGroup.add(leftEye);
-  const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-  rightEye.position.set(0.3, 3.6, 0.5);
-  robotGroup.add(rightEye);
-  
+  leftEye.position.set(-0.35, 1.65, 0.9);
+  group.add(leftEye);
+  const rightEye = new THREE.Mesh(eyeGeo, eyeMat.clone());
+  rightEye.position.set(0.35, 1.65, 0.9);
+  group.add(rightEye);
+
+  // Mouth arc
+  const mouthCurve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(-0.3, 1.1, 0.96),
+    new THREE.Vector3(0, 0.95, 1.02),
+    new THREE.Vector3(0.3, 1.1, 0.96)
+  );
+  const mouthPoints = mouthCurve.getPoints(20);
+  const mouthGeo = new THREE.BufferGeometry().setFromPoints(mouthPoints);
+  const mouthMat = new THREE.LineBasicMaterial({ color: 0x00D4FF });
+  const mouth = new THREE.Line(mouthGeo, mouthMat);
+  group.add(mouth);
+
   // Body
-  const bodyGeo = new THREE.BoxGeometry(1.8, 2.2, 0.9);
-  const bodyMat = new THREE.MeshPhongMaterial({ 
-    color: 0x1a1a2e,
-    emissive: 0x7B61FF,
-    emissiveIntensity: 0.15,
-    shininess: 80
+  const bodyGeo = new THREE.CylinderGeometry(0.75, 0.85, 1.8, 32);
+  const bodyMat = new THREE.MeshPhongMaterial({
+    color: 0x121228, shininess: 80, specular: 0x7B61FF, emissive: 0x05050f
   });
   const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.position.y = 1.5;
-  robotGroup.add(body);
-  
-  // Chest glow
-  const chestGeo = new THREE.CircleGeometry(0.3, 32);
-  const chestMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF });
+  body.position.set(0, 0, 0);
+  group.add(body);
+
+  // Chest glowing panel
+  const chestGeo = new THREE.PlaneGeometry(0.8, 0.5);
+  const chestMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.15 });
   const chest = new THREE.Mesh(chestGeo, chestMat);
-  chest.position.set(0, 1.6, 0.46);
-  robotGroup.add(chest);
-  
+  chest.position.set(0, 0.3, 0.86);
+  group.add(chest);
+
   // Arms
-  const armGeo = new THREE.BoxGeometry(0.35, 2, 0.35);
-  const armMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 60 });
+  const armGeo = new THREE.CylinderGeometry(0.22, 0.22, 1.0, 16);
+  const armMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 100, specular: 0x00D4FF });
   const leftArm = new THREE.Mesh(armGeo, armMat);
-  leftArm.position.set(-1.2, 1.8, 0);
-  robotGroup.add(leftArm);
-  const rightArm = new THREE.Mesh(armGeo, armMat);
-  rightArm.position.set(1.2, 1.8, 0);
-  robotGroup.add(rightArm);
-  
+  leftArm.position.set(-1.05, 0.1, 0);
+  leftArm.rotation.z = 0.3;
+  group.add(leftArm);
+  const rightArm = new THREE.Mesh(armGeo, armMat.clone());
+  rightArm.position.set(1.05, 0.1, 0);
+  rightArm.rotation.z = -0.3;
+  group.add(rightArm);
+
   // Legs
-  const legGeo = new THREE.BoxGeometry(0.5, 2.2, 0.5);
-  const legMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 60 });
+  const legGeo = new THREE.CylinderGeometry(0.25, 0.2, 1.0, 16);
+  const legMat = new THREE.MeshPhongMaterial({ color: 0x111122, shininess: 90 });
   const leftLeg = new THREE.Mesh(legGeo, legMat);
-  leftLeg.position.set(-0.5, -0.8, 0);
-  robotGroup.add(leftLeg);
-  const rightLeg = new THREE.Mesh(legGeo, legMat);
-  rightLeg.position.set(0.5, -0.8, 0);
-  robotGroup.add(rightLeg);
-  
-  robotGroup.position.set(3.5, 0, 0);
-  scene.add(robotGroup);
-  
-  // Orbiting ring
-  const ringGeo = new THREE.TorusGeometry(2.5, 0.08, 16, 100);
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.7 });
-  const ring = new THREE.Mesh(ringGeo, ringMat);
-  ring.rotation.x = Math.PI / 3;
-  ring.position.copy(robotGroup.position);
-  scene.add(ring);
-  
-  // Second ring
-  const ring2Geo = new THREE.TorusGeometry(3.2, 0.05, 16, 100);
-  const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x7B61FF, transparent: true, opacity: 0.5 });
-  const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
-  ring2.rotation.x = -Math.PI / 4;
-  ring2.rotation.z = Math.PI / 6;
-  ring2.position.copy(robotGroup.position);
-  scene.add(ring2);
-  
-  // Floating particles
-  const particlesGeo = new THREE.BufferGeometry();
-  const particleCount = 200;
-  const posArray = new Float32Array(particleCount * 3);
-  for (let i = 0; i < particleCount * 3; i++) {
-    posArray[i] = (Math.random() - 0.5) * 15;
-  }
-  particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-  const particlesMat = new THREE.PointsMaterial({
-    size: 0.05,
-    color: 0x00D4FF,
-    transparent: true,
-    opacity: 0.8,
-    blending: THREE.AdditiveBlending
+  leftLeg.position.set(-0.3, -1.4, 0);
+  group.add(leftLeg);
+  const rightLeg = new THREE.Mesh(legGeo, legMat.clone());
+  rightLeg.position.set(0.3, -1.4, 0);
+  group.add(rightLeg);
+
+  // Antenna
+  const antGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8);
+  const antMat = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+  const antenna = new THREE.Mesh(antGeo, antMat);
+  antenna.position.set(0, 2.75, 0);
+  group.add(antenna);
+  const antTopGeo = new THREE.SphereGeometry(0.1, 12, 12);
+  const antTopMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF });
+  const antTop = new THREE.Mesh(antTopGeo, antTopMat);
+  antTop.position.set(0, 3.05, 0);
+  group.add(antTop);
+
+  group.position.set(3, -0.3, 0);
+  scene.add(group);
+
+  // Orbital rings
+  const rings = [];
+  const ringData = [
+    { r: 2.8, speed: 0.6, tilt: 0.3, color: 0x00D4FF },
+    { r: 3.5, speed: -0.4, tilt: -0.5, color: 0x7B61FF },
+    { r: 4.2, speed: 0.25, tilt: 0.8, color: 0x00D4FF },
+  ];
+  ringData.forEach(rd => {
+    const ringGeo = new THREE.TorusGeometry(rd.r, 0.02, 8, 120);
+    const ringMat = new THREE.MeshBasicMaterial({ color: rd.color, transparent: true, opacity: 0.35 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = rd.tilt;
+    ring.userData = { speed: rd.speed, tilt: rd.tilt };
+    group.add(ring);
+    rings.push(ring);
   });
-  const particles = new THREE.Points(particlesGeo, particlesMat);
-  scene.add(particles);
-  
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-  scene.add(ambientLight);
-  
-  const blueLight = new THREE.PointLight(0x00D4FF, 2, 15);
-  blueLight.position.set(5, 5, 5);
-  scene.add(blueLight);
-  
-  const purpleLight = new THREE.PointLight(0x7B61FF, 1.5, 15);
-  purpleLight.position.set(-5, 3, 5);
-  scene.add(purpleLight);
-  
-  camera.position.z = 8;
-  
-  // Animation
+
+  // Floating particles
+  const particles = [];
+  const particleGeo = new THREE.SphereGeometry(0.05, 8, 8);
+  for (let i = 0; i < 24; i++) {
+    const angle = (i / 24) * Math.PI * 2;
+    const radius = 2.5 + Math.random() * 2;
+    const pMat = new THREE.MeshBasicMaterial({
+      color: i % 2 === 0 ? 0x00D4FF : 0x7B61FF,
+      transparent: true, opacity: 0.7
+    });
+    const p = new THREE.Mesh(particleGeo, pMat);
+    p.position.set(Math.cos(angle) * radius, (Math.random() - 0.5) * 4, Math.sin(angle) * radius * 0.5);
+    p.userData = { angle, radius, speed: 0.2 + Math.random() * 0.4, yOffset: p.position.y };
+    group.add(p);
+    particles.push(p);
+  }
+
+  // Mouse parallax
   let mouseX = 0, mouseY = 0;
   document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
   });
-  
-  function animate() {
-    requestAnimationFrame(animate);
-    
-    // Robot gentle float
-    robotGroup.position.y = Math.sin(Date.now() * 0.001) * 0.3;
-    robotGroup.rotation.y = Math.sin(Date.now() * 0.0005) * 0.1;
-    
-    // Head slight movement
-    head.rotation.y = Math.sin(Date.now() * 0.002) * 0.1;
-    head.rotation.x = Math.sin(Date.now() * 0.0015) * 0.05;
-    
-    // Ring rotation
-    ring.rotation.z += 0.003;
-    ring.rotation.x += 0.001;
-    ring2.rotation.z -= 0.002;
-    ring2.rotation.y += 0.001;
-    
-    // Particle drift
-    particles.rotation.y += 0.0003;
-    particles.rotation.x += 0.0001;
-    
-    // Camera follow mouse subtly
-    camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
-    camera.position.y += (mouseY * 0.3 - camera.position.y) * 0.02;
-    camera.lookAt(robotGroup.position);
-    
-    renderer.render(scene, camera);
-  }
-  
-  animate();
-  
-  // Resize handler
+
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
+
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.012;
+
+    // Idle bob
+    group.position.y = -0.3 + Math.sin(t * 0.8) * 0.08;
+
+    // Mouse parallax
+    group.rotation.y += (mouseX * 0.3 - group.rotation.y) * 0.04;
+    group.rotation.x += (-mouseY * 0.15 - group.rotation.x) * 0.04;
+
+    // Rings rotation
+    rings.forEach((ring, i) => {
+      ring.rotation.z += ring.userData.speed * 0.008;
+    });
+
+    // Particles orbit
+    particles.forEach(p => {
+      p.userData.angle += p.userData.speed * 0.008;
+      const a = p.userData.angle;
+      const r = p.userData.radius;
+      p.position.x = Math.cos(a) * r;
+      p.position.z = Math.sin(a) * r * 0.6;
+      p.position.y = p.userData.yOffset + Math.sin(a * 2 + t) * 0.3;
+    });
+
+    // Eye glow pulse
+    const eyePulse = 0.6 + Math.sin(t * 3) * 0.4;
+    leftEye.material.color.setRGB(0, eyePulse, 1);
+    rightEye.material.color.setRGB(0, eyePulse, 1);
+    antTop.material.color.setRGB(0, eyePulse, 1);
+
+    // Chest pulse
+    chest.material.opacity = 0.08 + Math.sin(t * 2) * 0.07;
+
+    renderer.render(scene, camera);
+  }
+  animate();
 })();
 
 // ──────────────────────────────────────────

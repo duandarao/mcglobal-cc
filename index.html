@@ -11,6 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
+  <!-- Three.js for 3D Animation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
   <style>
     /* ─── Reset & Base ──────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -217,6 +220,7 @@
       width: 100%; height: 100%;
       background: linear-gradient(90deg, transparent, rgba(0,212,255,0.03), transparent);
       animation: lightBeam 8s ease-in-out infinite;
+      z-index: 0;
     }
     @keyframes lightBeam {
       0% { left: -100%; }
@@ -266,7 +270,7 @@
       100% { transform: translate(0, 0) scale(1); }
     }
     .hero-content {
-      position: relative; z-index: 2;
+      position: relative; z-index: 10;
       max-width: 680px;
       padding: 140px 40px 80px;
       margin-left: max(40px, calc(50vw - 580px));
@@ -1976,8 +1980,189 @@ function toggleMobileMenu() {
 }
 
 // ──────────────────────────────────────────
-// Hero — CSS animated background (no JS dependency)
+// Three.js 3D Background Animation
 // ──────────────────────────────────────────
+(function initThreeJS() {
+  if (typeof THREE === 'undefined') return;
+  
+  const container = document.getElementById('hero');
+  if (!container) return;
+  
+  // Scene setup
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+  renderer.domElement.style.position = 'absolute';
+  renderer.domElement.style.top = '0';
+  renderer.domElement.style.left = '0';
+  renderer.domElement.style.zIndex = '1';
+  renderer.domElement.style.pointerEvents = 'none';
+  
+  // Robot figure (simplified humanoid)
+  const robotGroup = new THREE.Group();
+  
+  // Head
+  const headGeo = new THREE.BoxGeometry(1.2, 1.4, 1);
+  const headMat = new THREE.MeshPhongMaterial({ 
+    color: 0x1a1a2e,
+    emissive: 0x00D4FF,
+    emissiveIntensity: 0.3,
+    shininess: 100
+  });
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.y = 3.5;
+  robotGroup.add(head);
+  
+  // Eyes (glowing)
+  const eyeGeo = new THREE.SphereGeometry(0.15, 16, 16);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF });
+  const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+  leftEye.position.set(-0.3, 3.6, 0.5);
+  robotGroup.add(leftEye);
+  const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+  rightEye.position.set(0.3, 3.6, 0.5);
+  robotGroup.add(rightEye);
+  
+  // Body
+  const bodyGeo = new THREE.BoxGeometry(1.8, 2.2, 0.9);
+  const bodyMat = new THREE.MeshPhongMaterial({ 
+    color: 0x1a1a2e,
+    emissive: 0x7B61FF,
+    emissiveIntensity: 0.15,
+    shininess: 80
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.y = 1.5;
+  robotGroup.add(body);
+  
+  // Chest glow
+  const chestGeo = new THREE.CircleGeometry(0.3, 32);
+  const chestMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF });
+  const chest = new THREE.Mesh(chestGeo, chestMat);
+  chest.position.set(0, 1.6, 0.46);
+  robotGroup.add(chest);
+  
+  // Arms
+  const armGeo = new THREE.BoxGeometry(0.35, 2, 0.35);
+  const armMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 60 });
+  const leftArm = new THREE.Mesh(armGeo, armMat);
+  leftArm.position.set(-1.2, 1.8, 0);
+  robotGroup.add(leftArm);
+  const rightArm = new THREE.Mesh(armGeo, armMat);
+  rightArm.position.set(1.2, 1.8, 0);
+  robotGroup.add(rightArm);
+  
+  // Legs
+  const legGeo = new THREE.BoxGeometry(0.5, 2.2, 0.5);
+  const legMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 60 });
+  const leftLeg = new THREE.Mesh(legGeo, legMat);
+  leftLeg.position.set(-0.5, -0.8, 0);
+  robotGroup.add(leftLeg);
+  const rightLeg = new THREE.Mesh(legGeo, legMat);
+  rightLeg.position.set(0.5, -0.8, 0);
+  robotGroup.add(rightLeg);
+  
+  robotGroup.position.set(3.5, 0, 0);
+  scene.add(robotGroup);
+  
+  // Orbiting ring
+  const ringGeo = new THREE.TorusGeometry(2.5, 0.08, 16, 100);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.7 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 3;
+  ring.position.copy(robotGroup.position);
+  scene.add(ring);
+  
+  // Second ring
+  const ring2Geo = new THREE.TorusGeometry(3.2, 0.05, 16, 100);
+  const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x7B61FF, transparent: true, opacity: 0.5 });
+  const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+  ring2.rotation.x = -Math.PI / 4;
+  ring2.rotation.z = Math.PI / 6;
+  ring2.position.copy(robotGroup.position);
+  scene.add(ring2);
+  
+  // Floating particles
+  const particlesGeo = new THREE.BufferGeometry();
+  const particleCount = 200;
+  const posArray = new Float32Array(particleCount * 3);
+  for (let i = 0; i < particleCount * 3; i++) {
+    posArray[i] = (Math.random() - 0.5) * 15;
+  }
+  particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+  const particlesMat = new THREE.PointsMaterial({
+    size: 0.05,
+    color: 0x00D4FF,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending
+  });
+  const particles = new THREE.Points(particlesGeo, particlesMat);
+  scene.add(particles);
+  
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+  scene.add(ambientLight);
+  
+  const blueLight = new THREE.PointLight(0x00D4FF, 2, 15);
+  blueLight.position.set(5, 5, 5);
+  scene.add(blueLight);
+  
+  const purpleLight = new THREE.PointLight(0x7B61FF, 1.5, 15);
+  purpleLight.position.set(-5, 3, 5);
+  scene.add(purpleLight);
+  
+  camera.position.z = 8;
+  
+  // Animation
+  let mouseX = 0, mouseY = 0;
+  document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+  });
+  
+  function animate() {
+    requestAnimationFrame(animate);
+    
+    // Robot gentle float
+    robotGroup.position.y = Math.sin(Date.now() * 0.001) * 0.3;
+    robotGroup.rotation.y = Math.sin(Date.now() * 0.0005) * 0.1;
+    
+    // Head slight movement
+    head.rotation.y = Math.sin(Date.now() * 0.002) * 0.1;
+    head.rotation.x = Math.sin(Date.now() * 0.0015) * 0.05;
+    
+    // Ring rotation
+    ring.rotation.z += 0.003;
+    ring.rotation.x += 0.001;
+    ring2.rotation.z -= 0.002;
+    ring2.rotation.y += 0.001;
+    
+    // Particle drift
+    particles.rotation.y += 0.0003;
+    particles.rotation.x += 0.0001;
+    
+    // Camera follow mouse subtly
+    camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
+    camera.position.y += (mouseY * 0.3 - camera.position.y) * 0.02;
+    camera.lookAt(robotGroup.position);
+    
+    renderer.render(scene, camera);
+  }
+  
+  animate();
+  
+  // Resize handler
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
 
 // ──────────────────────────────────────────
 // Scroll Reveal

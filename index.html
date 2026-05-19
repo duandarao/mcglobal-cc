@@ -2247,14 +2247,29 @@ function submitForm(e) {
 }
 
 function downloadReport() {
-  const PDF_URL = 'https://raw.githubusercontent.com/duandarao/mcglobal-cc/main/Physical-AI-Market-Entry-Guide-2026.pdf';
-  const a = document.createElement('a');
-  a.href = PDF_URL;
-  a.download = 'Physical-AI-Market-Entry-Guide-2026.pdf';
-  a.target = '_blank';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  // Use GitHub Pages hosted PDF for reliable direct download
+  const PDF_URL = 'https://duandarao.github.io/mcglobal-cc/Physical-AI-Market-Entry-Guide-2026.pdf';
+  fetch(PDF_URL)
+    .then(function(response) { return response.blob(); })
+    .then(function(blob) {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = 'Physical-AI-Market-Entry-Guide-2026.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+    })
+    .catch(function() {
+      // fallback
+      const a = document.createElement('a');
+      a.href = PDF_URL;
+      a.download = 'Physical-AI-Market-Entry-Guide-2026.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
 }
 
 

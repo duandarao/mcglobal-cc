@@ -2258,110 +2258,49 @@ function submitForm(e) {
   if (!title) { alert('Please enter your job title.'); return; }
   if (!email || !emailRegex.test(email)) { alert('Please enter a valid business email.'); return; }
 
-  // Set loading state
-  btn.textContent = 'Sending...';
+  // Build email body
+  const body = [
+    '--- Project Brief ---',
+    'Company: ' + company,
+    'Website: ' + website,
+    'Name: ' + name,
+    'Title: ' + title,
+    'Email: ' + email,
+    stage ? 'Project Stage: ' + stage : '',
+    timeline ? 'Target Launch: ' + timeline : '',
+    budget ? 'Budget Range: ' + budget : '',
+    volume ? 'Est. Annual Volume: ' + volume : '',
+    message ? '\nProject Description:\n' + message : ''
+  ].filter(Boolean).join('\n');
+
+  // Encode for mailto
+  const subject = encodeURIComponent('[Brief] ' + company + ' — ' + name + ' (' + title + ')');
+  const mailBody = encodeURIComponent(body);
+
+  // Open mail client
+  window.location.href = 'mailto:build@mcglobal.cc?subject=' + subject + '&body=' + mailBody;
+
+  // Show success
+  btn.textContent = '✓ Opening Email...';
+  btn.style.background = '#00aa55';
+  btn.style.color = '#fff';
   btn.style.pointerEvents = 'none';
 
-  // Build HTML email body
-  const htmlBody = `
-    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #222;">
-      <div style="background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%); padding: 32px; border-radius: 12px 12px 0 0;">
-        <h1 style="color: #00d4ff; margin: 0; font-size: 24px;">New Project Brief Received</h1>
-        <p style="color: #888; margin: 8px 0 0; font-size: 14px;">via mcglobal.cc contact form</p>
-      </div>
-      <div style="background: #fff; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e0e0e0;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-          <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 10px 0; color: #888; width: 160px;">Company</td>
-            <td style="padding: 10px 0; font-weight: 600;">${escapeHtml(company)}</td>
-          </tr>
-          <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 10px 0; color: #888;">Website</td>
-            <td style="padding: 10px 0;"><a href="${escapeHtml(website)}" style="color: #0066cc;">${escapeHtml(website)}</a></td>
-          </tr>
-          <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 10px 0; color: #888;">Name</td>
-            <td style="padding: 10px 0; font-weight: 600;">${escapeHtml(name)}</td>
-          </tr>
-          <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 10px 0; color: #888;">Job Title</td>
-            <td style="padding: 10px 0;">${escapeHtml(title)}</td>
-          </tr>
-          <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 10px 0; color: #888;">Email</td>
-            <td style="padding: 10px 0;"><a href="mailto:${escapeHtml(email)}" style="color: #0066cc;">${escapeHtml(email)}</a></td>
-          </tr>
-          ${stage ? `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0; color: #888;">Project Stage</td><td style="padding: 10px 0;">${escapeHtml(stage)}</td></tr>` : ''}
-          ${timeline ? `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0; color: #888;">Target Launch</td><td style="padding: 10px 0;">${escapeHtml(timeline)}</td></tr>` : ''}
-          ${budget ? `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0; color: #888;">Budget Range</td><td style="padding: 10px 0;">${escapeHtml(budget)}</td></tr>` : ''}
-          ${volume ? `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0; color: #888;">Est. Volume</td><td style="padding: 10px 0;">${escapeHtml(volume)}</td></tr>` : ''}
-        </table>
-        ${message ? `<div style="margin-top: 24px; padding: 16px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #00d4ff;">
-          <p style="margin: 0 0 8px; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Project Description</p>
-          <p style="margin: 0; white-space: pre-wrap; line-height: 1.6;">${escapeHtml(message)}</p>
-        </div>` : ''}
-        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; display: flex; gap: 12px;">
-          <a href="mailto:${escapeHtml(email)}?subject=Re: Your Project Brief — McGlobal" style="flex:1; background:#00d4ff; color:#000; text-align:center; padding:12px 16px; border-radius:8px; text-decoration:none; font-weight:700; font-size:14px;">Reply to Client</a>
-          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${escapeHtml(email)}&su=Re: Your Project Brief — McGlobal" target="_blank" style="flex:1; background:#f0f0f0; color:#333; text-align:center; padding:12px 16px; border-radius:8px; text-decoration:none; font-weight:700; font-size:14px;">Open in Gmail</a>
-        </div>
-      </div>
-      <p style="color: #999; font-size: 11px; text-align: center; margin-top: 16px;">
-        McGlobal — Your Outsourced Physical AI R&D Department | build@mcglobal.cc
-      </p>
-    </div>
-  `;
+  setTimeout(() => {
+    btn.textContent = '✓ Brief Received!';
+  }, 1500);
 
-  fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer re_VWm6UFLj_4tfP5ynFQ4zCsZPpXrZU7ZYn'
-    },
-    body: JSON.stringify({
-      from: 'McGlobal Contact <noreply@mcglobal.cc>',
-      to: ['build@mcglobal.cc'],
-      reply_to: email,
-      subject: `[Brief] ${company} — ${name} (${title})`,
-      html: htmlBody
-    })
-  }).then(response => {
-    if (response.ok) {
-      btn.textContent = '✓ Brief Received!';
-      btn.style.background = '#00aa55';
-      // Clear form
-      ['f-company','f-website','f-name','f-title','f-email','f-stage','f-timeline','f-budget','f-volume','f-message'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-    } else {
-      return response.json().then(err => { throw new Error(err.message || 'Server error'); });
-    }
-  }).catch(error => {
-    console.error('Form submit error:', error);
-    btn.textContent = 'Failed — try again';
-    btn.style.background = '#cc2222';
-    btn.style.color = '#fff';
-    setTimeout(() => {
-      btn.textContent = 'Send Project Brief →';
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.pointerEvents = '';
-    }, 4000);
-  }).finally(() => {
-    if (btn.textContent === 'Sending...') {
-      btn.textContent = 'Send Project Brief →';
-      btn.style.pointerEvents = '';
-    }
-  });
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+  setTimeout(() => {
+    btn.textContent = 'Send Project Brief →';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.pointerEvents = '';
+    // Clear form
+    ['f-company','f-website','f-name','f-title','f-email','f-stage','f-timeline','f-budget','f-volume','f-message'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  }, 4000);
 }
 
 function downloadReport() {

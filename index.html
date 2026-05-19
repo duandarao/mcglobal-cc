@@ -1004,7 +1004,7 @@
         <p>30-minute Zoom call. No pitch deck. Just a real conversation about your project.</p>
         <div class="cta-btns">
           <a href="#" class="btn btn-primary" onclick="showPage('contact')">📅 Book Free Consultation</a>
-          <a href="#" class="btn btn-outline" download="Physical-AI-Market-Entry-Guide-2026.pdf">📄 Download Free Market Report</a>
+          <a href="#" class="btn btn-outline" onclick="downloadReport();return false;">📄 Download Free Market Report</a>
         </div>
       </div>
     </div>
@@ -1362,7 +1362,7 @@
       <h1 style="max-width:680px;margin-bottom:20px;">Intelligence That Gives<br/>You an Edge</h1>
       <p style="font-size:18px;color:var(--text-secondary);max-width:600px;">Market analysis, technical deep-dives, and regulatory updates — written by practitioners, not analysts.</p>
       <div style="display:flex;gap:12px;margin-top:32px;flex-wrap:wrap;">
-        <a href="#" class="btn btn-primary" download="Physical-AI-Market-Entry-Guide-2026.pdf">📄 Download Free: Physical AI Market Entry Guide 2026</a>
+        <a href="#" class="btn btn-primary" onclick="downloadReport();return false;">📄 Download Free: Physical AI Market Entry Guide 2026</a>
         <a href="#" class="btn btn-outline">📧 Subscribe to Monthly Newsletter</a>
       </div>
     </div>
@@ -1904,7 +1904,7 @@
         <div class="footer-col-title">Resources</div>
         <ul class="footer-links">
           <li><a href="#" onclick="showPage('insights')">Industry Insights</a></li>
-          <li><a href="https://duandarao.github.io/mcglobal-cc/Physical-AI-Market-Entry-Guide-2026.pdf" download="Physical-AI-Market-Entry-Guide-2026.pdf">Free Market Report</a></li>
+          <li><a href="#" onclick="downloadReport();return false;">Free Market Report</a></li>
           <li><a href="#" onclick="showPage('portfolio')">Portfolio</a></li>
           <li><a href="#" onclick="showPage('compliance')">Compliance</a></li>
           <li><a href="#" onclick="showPage('faq')">FAQ</a></li>
@@ -2247,30 +2247,24 @@ function submitForm(e) {
 }
 
 function downloadReport() {
-  // Use GitHub Pages hosted PDF for reliable direct download
-  const PDF_URL = 'https://duandarao.github.io/mcglobal-cc/Physical-AI-Market-Entry-Guide-2026.pdf';
-  fetch(PDF_URL)
-    .then(function(response) { return response.blob(); })
+  fetch('https://duandarao.github.io/mcglobal-cc/Physical-AI-Market-Entry-Guide-2026.pdf')
+    .then(function(r) { return r.blob(); })
     .then(function(blob) {
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
       a.download = 'Physical-AI-Market-Entry-Guide-2026.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
     })
     .catch(function() {
-      // fallback
-      const a = document.createElement('a');
-      a.href = PDF_URL;
-      a.download = 'Physical-AI-Market-Entry-Guide-2026.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      window.location.href = 'https://duandarao.github.io/mcglobal-cc/Physical-AI-Market-Entry-Guide-2026.pdf';
     });
 }
+
+
 
 
 
